@@ -1,0 +1,400 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><style>/*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,::backdrop,:after,:before{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial}}}@layer theme{:host,:root{--font-sans:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--spacing:.25rem;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4,0,.2,1);--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono)}}@layer base{*,::backdrop,:after,:before{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}:host,html{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:var(--default-mono-font-family,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring{outline:auto}progress{vertical-align:baseline}summary{display:list-item}menu,ol,ul{list-style:none}audio,canvas,embed,iframe,img,object,svg,video{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,optgroup,select,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab,red,red)){::placeholder{color:color-mix(in oklab,currentcolor 50%,transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit,::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-day-field,::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-hour-field,::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-millisecond-field,::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.start{inset-inline-start:var(--spacing)}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}}:root{color-scheme:dark;--canvas:#14171d;--sidebar:#191d25;--surface:#1c212a;--line:#303644;--text:#edf0f7;--muted:#a4adbf;--accent:#a79afa}*{box-sizing:border-box}body{background:var(--canvas);color:var(--text);margin:0;font-family:Inter,system-ui,sans-serif;font-size:14px}button{cursor:pointer}button:disabled{cursor:default;opacity:.55}a{color:var(--accent)}a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.workspace{grid-template-columns:242px minmax(0,1fr);min-height:100dvh;display:grid}.sidebar{background:var(--sidebar);border-right:1px solid var(--line);flex-direction:column;gap:12px;height:100dvh;padding:18px 14px;display:flex;position:sticky;top:0}.actions,.brand,.catalog-label,.column header,.issue-top,.page-header,.sheet header,.sidebar-bottom,.toolbar{justify-content:space-between;align-items:center;gap:10px;display:flex}.brand{justify-content:flex-start;margin-bottom:20px;font-size:16px}.brand span{color:#c6baff;background:#332b53;border-radius:9px;place-items:center;width:33px;height:33px;display:grid}.breadcrumb,.catalog-label,.muted{color:var(--muted)}.sidebar nav{flex:1;align-content:start;gap:3px;display:grid;overflow:auto}.sidebar nav button{text-align:left;border-radius:6px;align-items:center;gap:9px;padding:7px;display:flex}.product-icon{color:#cabfff;background:#34304a;border-radius:5px;place-items:center;min-width:25px;height:25px;font-size:10px;display:grid}.sidebar-bottom{border-top:1px solid var(--line);padding-top:10px}input,select,textarea{border:1px solid var(--line);color:var(--text);background:#14171e;border-radius:7px;width:100%;padding:9px 11px}input:focus,select:focus,textarea:focus{outline:1px solid var(--accent)}textarea{resize:vertical}.main{min-width:0;padding:28px}.page-header{flex-wrap:wrap;align-items:end;margin-bottom:20px}.breadcrumb span{margin:0 6px}h1{letter-spacing:-.035em;margin:5px 0 0;font-size:30px;font-weight:650}.actions{flex-wrap:wrap;justify-content:flex-start}.button,.ghost,.primary,.secondary{white-space:nowrap;border:1px solid #0000;border-radius:7px;justify-content:center;align-items:center;gap:7px;min-height:34px;padding:7px 12px;font-weight:550;display:inline-flex}.primary{color:#161027;background:var(--accent)}.secondary{background:var(--surface);border-color:var(--line)}.ghost{color:var(--muted)}.button:hover,.primary:hover{filter:brightness(1.16)}.toolbar{border-block:1px solid var(--line);flex-wrap:wrap;margin-bottom:20px;padding:8px 0}.toolbar label,.toolbar nav{align-items:center;gap:6px;display:flex}.toolbar nav button{color:var(--muted);border-radius:7px;align-items:center;gap:7px;padding:8px 12px;display:flex}.toolbar nav button[aria-pressed=true]{color:#d6ceff;background:#2a253e}.board{grid-auto-columns:minmax(205px,1fr);grid-auto-flow:column;align-items:start;gap:12px;padding-bottom:16px;display:grid;overflow:auto}.column{background:#181c24;border:1px solid #282e3b;border-radius:10px;min-height:246px;padding:9px}.column.over{border-color:var(--accent)}.column header{justify-content:flex-start;padding:4px 3px 12px}.column header h2{white-space:nowrap;font-weight:650}.column header button{margin-left:auto}.status-dot{background:var(--accent);border-radius:50%;width:8px;height:8px}.count{color:var(--muted);font-size:12px}.issue{background:#222833;border:1px solid #343c4b;border-radius:8px;margin-bottom:8px;padding:10px}.issue.dragging{z-index:2;border-color:var(--accent);position:relative}.empty-column,.grip,.issue-id{color:var(--muted);font-size:11px}.grip{touch-action:none}.issue-title{text-align:left;overflow-wrap:anywhere;width:100%;margin:5px 0 9px;font-weight:600;display:block}.tags{flex-wrap:wrap;gap:4px;display:flex}.tags span{background:#303747;border-radius:20px;padding:2px 7px;font-size:11px}.empty-column{text-align:left;width:100%;padding:8px 6px}.empty-state,.welcome{text-align:center;flex-direction:column;justify-content:center;align-items:center;gap:12px;min-height:65vh;padding:24px;display:flex}.welcome{min-height:100dvh}.empty-state svg,.welcome svg{color:var(--accent)}.empty-state p,.welcome p{color:var(--muted)}.sheet{background:var(--sidebar);width:min(100%,510px);max-width:none;height:100dvh;max-height:none;color:var(--text);border-left:1px solid var(--line);margin:0;padding:22px;position:fixed;inset:0 0 0 auto;overflow:auto}.sheet::backdrop{background:#090b10aa}.sheet header{margin-bottom:20px}.sheet h2{font-size:20px;font-weight:650}.history,.sheet form{gap:13px;display:grid}.sheet form>button{justify-self:start}.sheet label{gap:5px;display:grid}.sheet label.checkbox{gap:9px;display:flex}.checkbox input{width:auto}.fields{grid-template-columns:1fr 1fr;gap:10px;display:grid}.history article,.proposal{border:1px solid var(--line);overflow-wrap:anywhere;border-radius:8px;margin-top:14px;padding:12px}.operation{border-top:1px solid var(--line);margin-top:8px;padding:10px 0}.history p,.operation dt,.operation p{color:var(--muted);font-size:12px}.operation dd{white-space:pre-wrap}.operation dd del,.operation dd span{display:block}.error{color:#ffd0d6;background:#472732;border:1px solid #854857;border-radius:7px;margin-bottom:10px;padding:10px}@media (max-width:760px){.workspace{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--line);height:auto;position:relative}.sidebar nav{max-height:130px}.brand{margin-bottom:0}.main{padding:14px}}:root{color-scheme:light;--canvas:oklch(98% .008 91);--sidebar:oklch(95.8% .013 91);--surface:oklch(99.5% .005 91);--line:oklch(88.5% .016 91);--text:oklch(25% .023 160);--muted:oklch(47% .024 155);--accent:oklch(41% .083 156);--selected:oklch(91% .035 153)}body{font-family:Geist,system-ui,sans-serif}.sidebar{padding:22px 15px}.brand span,.product-icon{color:var(--accent)}.brand span,.product-icon,.sidebar nav button:hover,.sidebar nav button[aria-current]{background:var(--selected)}input,select,textarea{background:var(--surface)}.primary{color:var(--surface)}.ghost:hover,.secondary:hover{background:var(--selected);filter:none}.main{padding:30px 26px}.page-header{margin-bottom:24px}.toolbar nav button[aria-pressed=true]{background:var(--selected);color:var(--accent)}.column{background:var(--sidebar);min-height:290px}.column,.issue{border-color:var(--line)}.issue{background:var(--surface);box-shadow:0 1px 2px oklch(25% .02 150/.07)}.issue-title:hover{color:var(--accent)}.status-dot{background:oklch(60% .03 150)}.status-dot:is([data-status=In\ Progress],[data-status=Fixing]){background:oklch(54% .12 247)}.status-dot:is([data-status=Review],[data-status=Verify],[data-status=Triage]){background:oklch(61% .13 67)}.status-dot:is([data-status=Done],[data-status=Closed]){background:var(--accent)}.tags span{background:var(--sidebar)}.tags span[data-priority=Urgent]{color:oklch(37% .12 22);background:oklch(92% .043 22)}.tags span[data-priority=High]{color:oklch(38% .09 65);background:oklch(93% .043 75)}.sheet{z-index:20;background:var(--surface);box-shadow:-8px 0 40px oklch(25% .03 160/.14)}.sheet-overlay{z-index:19;background:oklch(22% .025 160/.35);position:fixed;inset:0}.preview-note{background:var(--selected);color:var(--accent);border-radius:7px;justify-content:space-between;gap:8px;margin-bottom:20px;padding:8px 12px;font-size:12px;display:flex}.preview-note a,.welcome a{text-underline-offset:3px;text-decoration:underline}.operation dd del{color:oklch(45% .13 22)}@media (max-width:760px){.main{padding:16px}.sidebar{padding:14px}}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-outline-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-blur{syntax:"*";inherits:false}@property --tw-brightness{syntax:"*";inherits:false}@property --tw-contrast{syntax:"*";inherits:false}@property --tw-grayscale{syntax:"*";inherits:false}@property --tw-hue-rotate{syntax:"*";inherits:false}@property --tw-invert{syntax:"*";inherits:false}@property --tw-opacity{syntax:"*";inherits:false}@property --tw-saturate{syntax:"*";inherits:false}@property --tw-sepia{syntax:"*";inherits:false}@property --tw-drop-shadow{syntax:"*";inherits:false}@property --tw-drop-shadow-color{syntax:"*";inherits:false}@property --tw-drop-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:"*";inherits:false}</style><title>ProjectKanban</title><meta name="description" content="Product development and bug tracking"/><style>
+/* Project identity and glass surfaces */
+.brand .brand-mark {
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  width: 36px; height: 36px; border-radius: 11px;
+  background: linear-gradient(145deg, #327a69, #14453e);
+  box-shadow: inset 0 1px 0 #ffffff52, 0 3px 8px #16463c30;
+}
+.brand-mark i { width: 5px; border-radius: 2px; background: #dbfff3; }
+.brand-mark i:nth-child(1) { height: 11px; opacity: .67; transform: translateY(3px); }
+.brand-mark i:nth-child(2) { height: 19px; }
+.brand-mark i:nth-child(3) { height: 13px; opacity: .8; transform: translateY(-3px); }
+.product-banner {
+  isolation: isolate; position: relative; overflow: hidden;
+  padding: clamp(17px, 3vw, 32px); min-height: 128px;
+  border: 1px solid #bedbd2; border-radius: 17px;
+  background: radial-gradient(ellipse at 85% 8%, #fcfff9 0%, transparent 60%),
+    linear-gradient(115deg, #d5eae1, #e1f2eb 56%, #c8e5df);
+}
+.product-banner::before {
+  content: ""; position: absolute; z-index: -1; inset: -75% -12% -100% 42%;
+  transform: rotate(-19deg); pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 41px, #ffffff60 42px 43px, transparent 44px 75px);
+  mask-image: linear-gradient(90deg, transparent, black 75%);
+}
+.product-banner h1 { color: #163c33; }
+.product-banner .secondary { background: #f9fffdad; border-color: #a9c8bd; }
+.board {
+  background: radial-gradient(ellipse at 28% 0%, #d8ebe2 0%, transparent 66%), #edf3ef;
+  border-radius: 13px; padding: 10px 10px 15px;
+  overflow-x: scroll;
+}
+.column { background: #e6f0eb8c; border-color: #cbdcd4; }
+.issue {
+  background: linear-gradient(145deg, #ffffffed, #f4fcf8aa 58%, #d8ebe478);
+  border: 1px solid #fafffd;
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 1px #60867831, 0 4px 10px #28584715;
+  backdrop-filter: blur(10px);
+}
+.issue:hover, .issue:focus-within { box-shadow: inset 0 1px 0 #fff, 0 0 0 1px #4a8b75, 0 6px 14px #28584725; }
+.board::-webkit-scrollbar { height: 12px; }
+.board::-webkit-scrollbar-track { background: #dcebe4; border: 1px solid #cadcd2; border-radius: 999px; }
+.board::-webkit-scrollbar-thumb {
+  border: 2px solid #dcebe4; border-radius: 999px;
+  background: linear-gradient(#d3f2e6, #7eae9c);
+  box-shadow: inset 0 1px 0 #ffffffb0;
+}
+@supports not selector(::-webkit-scrollbar) { .board { scrollbar-color: #83ae9e #dcebe4; } }
+</style><style>
+.brand .brand-wordmark span { display: inline; width: auto; height: auto; background: none; border-radius: 0; }
+.brand .brand-wordmark .wordmark-project { color: #263b36; }
+.brand .brand-wordmark .wordmark-kanban { color: #246955; }
+</style><style>
+.issue { --issue-tint: #f4fcf8; background: linear-gradient(145deg, #fffffff2, var(--issue-tint)); }
+.issue[data-state="active"] { --issue-tint: #e4f0fb; }
+.issue[data-state="review"] { --issue-tint: #fbefdc; }
+.issue[data-state="done"] { --issue-tint: #ddf2e5; }
+.issue[data-state="blocked"] { --issue-tint: #fbe9e7; }
+.issue-indicators { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; }
+.issue-indicator { width: 9px; height: 9px; border-radius: 50%; background: #667972; }
+.issue-indicator[data-tone="pending"] { background: #9b580a; }
+.issue-indicator[data-tone="passed"] { background: #247357; }
+.issue-indicator[data-tone="failed"] { background: #ae3a36; }
+.issue-indicator[data-tone="plan"] { background: #4c65a1; }
+.issue-indicator:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+</style><style>
+.board-legend { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+.board-legend summary { cursor: pointer; color: var(--text); font-weight: 650; }
+.board-legend div { display: flex; flex-wrap: wrap; gap: 4px 18px; padding-top: 4px; }
+.issue-indicator { display: inline-grid; place-items: center; width: 17px; height: 17px; color: white; font-size: 10px; font-weight: 700; }
+</style></head><body>
+<div class="workspace">
+ <aside class="sidebar"><div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><strong class="brand-wordmark"><span class="wordmark-project">Project</span><span class="wordmark-kanban">Kanban</span></strong></div><div class="catalog-label">Products</div><nav aria-label="Products"><button aria-current="page">ProjectKanban</button></nav></aside>
+ <main class="main"><div class="preview-note">Local board · Changes are saved in this browser<span id="save-status" role="status"></span></div>
+ <header class="page-header product-banner"><div><div class="breadcrumb">Products / ProjectKanban</div><h1>ProjectKanban</h1></div><div class="actions"><button class="secondary" id="roadmap">Roadmap</button><button class="primary" id="new">+ New card</button></div></header>
+ <div class="toolbar"><nav aria-label="Boards"><button id="development" aria-pressed="true">Development</button><button id="bug" aria-pressed="false">Bug Fixes</button></nav></div><details className="board-legend" open><summary>Board legend</summary><div>
+          <p><strong>Card color</strong> · Neutral: queued · Blue: active · Amber: review · Green: complete · Red: blocked</p>
+          <p><strong>P</strong> Planning · Blue: needs review · Green: reviewed</p>
+          <p><strong>T</strong> Testing · Amber: pending · Green: passed · Red: failed</p>
+        <p><strong>!</strong> Waiting on prerequisites</p></div></details><div class="board" id="board" tabindex="0" aria-label="Kanban columns"></div></main>
+</div>
+<dialog id="editor" class="sheet" aria-labelledby="editor-title"><header><h2 id="editor-title">Card details</h2><button class="ghost" id="close" type="button">Close</button></header>
+<form id="edit"><label>Title<input name="title" required maxlength="180"></label><label>Status<select name="status"></select></label><label>Release<select name="release"></select></label><label>Phase<select name="phase"></select></label><label>Milestone<select name="milestone"></select></label><label>Details<textarea name="details" rows="7"></textarea></label><label class="checkbox"><input type="checkbox" name="planningRequired"> Planning required before implementation</label>
+<label>Implementation plan<textarea name="implementation" rows="4" placeholder="Approach, open decisions, and what is out of scope"></textarea></label>
+<label>Acceptance criteria<textarea name="acceptance" rows="3" placeholder="Observable outcomes that prove the work is complete"></textarea></label>
+<label>Blocked by<select name="blockers" multiple size="4" aria-describedby="blockers-help"></select></label><p id="blockers-help">Select the cards that must be complete before implementation.</p>
+<label class="checkbox"><input type="checkbox" name="planApproved"> Plan reviewed and ready</label>
+<label class="checkbox"><input type="checkbox" name="testRequired"> Verification required before closing</label>
+<label>Test plan<textarea name="testPlan" rows="6" placeholder="Setup and test data&#10;Steps and expected results&#10;Automation command or manual checks"></textarea></label>
+<label>Test result<select name="testResult"><option>Pending</option><option>Passed</option><option>Failed</option></select></label>
+<label>Evidence<textarea name="evidence" rows="3" placeholder="Command, environment, and observed results"></textarea></label>
+<p id="card-error" role="alert"></p><button class="primary" type="submit">Save card</button></form><section id="plan" hidden><h3>Releases, phases, and milestones</h3><div id="release-list"></div>
+<form id="release-form"><label>Release name<input name="release" required maxlength="80"></label>
+<label>Phases, one per line<textarea name="phases" rows="3" required></textarea></label>
+<label>Milestones, one per line<textarea name="milestones" rows="3" required></textarea></label>
+<button class="primary" type="submit">Add release</button><p id="release-error" role="alert"></p></form></section></dialog>
+<script>
+const initial = [
+  ["PK-01", "development", "Review", "Move and edit cards in the local preview", "Local card editing and drag are implemented. Browser drag and reload verification remain."],
+  ["PK-02", "development", "Review", "Add releases, phases, and milestones", "Authenticated release, phase, and milestone assignments and phase filtering implemented. Verify database round trip."],
+  ["PK-03", "development", "Review", "Add owners, tags, and dependencies", "Responsible person, topic tags, filtering, and enforced dependencies implemented. Verify authenticated flows."],
+  ["PK-04", "development", "In Progress", "Embed guided product and release planning", "Guided draft and transactional publish implemented. Structured release links and AI assistance remain."],
+  ["PK-05", "development", "Review", "Compare roadmap versions", "Roadmap comparison implemented. Verify comparison with persisted versions."],
+  ["PK-06", "development", "Review", "Add AI provider settings", "Provider settings and encrypted personal credentials implemented. Test live connections."],
+  ["PK-07", "development", "In Progress", "Connect coding tools through MCP", "Read-only MCP and revocable tokens implemented. Verify live reads and add scoped write tools."],
+  ["PK-08", "development", "Review", "Add shared workspaces and roles", "Product sharing with viewer and editor roles implemented. Verify live permission boundaries."],
+  ["PK-09", "development", "In Progress", "Add bug triage and release readiness", "Release readiness and bug intake template implemented. Verify the live triage workflow."],
+  ["PK-10", "development", "Review", "Add saved views and portfolio overview", "Browser-local saved views and portfolio filters implemented. Verify cross-product access and restoration."],
+  ["PK-11", "development", "In Progress", "Verify test deployment and prepare public release", "Local release checks in progress. Live test deployment, clean install, and public release remain."],
+  ["PK-12", "development", "Review", "Carry planning and verification into the authenticated app", "Card planning, approval, blockers, and verification persist through server writes. TypeScript, migration check, and production build passed. Verify the complete dependency flow with fictional data before closing."]
+];
+const columns = {development:["Backlog","Ready","In Progress","Review","Done"],bug:["Reported","Triage","Ready to Fix","Fixing","Verify","Closed"]};
+const storageKey = "projectkanban-local-roadmap-v1";
+const byId = (id) => document.getElementById(id);
+let cards = initial.map((card) => [...card]);
+try { const stored = JSON.parse(localStorage.getItem(storageKey)); if (Array.isArray(stored)) cards = stored; } catch {}
+const releaseKey = "projectkanban-local-releases-v1";
+let releases = [
+  {name:"Board foundations", phases:["Build","Verify"], milestones:["Interactive board","Test deployment"]},
+  {name:"Planning workflows", phases:["Model","Build"], milestones:["Structured roadmap","Guided product planning"]},
+  {name:"Integrations and release", phases:["Integrate","Release"], milestones:["Provider and MCP connections","Public release"]},
+];
+try {const saved = JSON.parse(localStorage.getItem(releaseKey)); if (Array.isArray(saved)) releases = saved;} catch {}
+function releaseOptions() {
+  const selected = releases.find((release) => release.name === form.elements.release.value);
+  for (const [field, values] of [["phase", selected?.phases], ["milestone", selected?.milestones]]) {
+    form.elements[field].replaceChildren(new Option("Unassigned",""), ...(values ?? []).map((value) => new Option(value,value)));
+  }
+}
+const nextRelease = {name:"Next Development", phases:["Build","Verify"], milestones:["Board improvements","Planning and integrations","Release readiness"]};
+const migrationKey = "projectkanban-next-development-v1";
+function assignNextRound() {
+  if (!releases.some(({name}) => name === nextRelease.name)) releases.unshift(nextRelease);
+  for (const card of cards) {
+    card[5] = nextRelease.name;
+    card[6] = card[2] === "Review" || card[2] === "Verify" ? "Verify" : "Build";
+    card[7] = ["PK-01","PK-02","PK-03"].includes(card[0]) ? "Board improvements" :
+      ["PK-09","PK-11"].includes(card[0]) ? "Release readiness" : "Planning and integrations";
+  }
+}
+try {
+  if (!localStorage.getItem(migrationKey)) {
+    assignNextRound();
+    localStorage.setItem(releaseKey, JSON.stringify(releases));
+    localStorage.setItem(storageKey, JSON.stringify(cards));
+    localStorage.setItem(migrationKey, "done");
+  }
+} catch { assignNextRound(); }
+function canClose(status, test) {
+  return !["Done","Closed"].includes(status) || !test?.required ||
+    (test.result === "Passed" && Boolean(test.plan.trim()) && Boolean(test.evidence.trim()));
+}
+const planningBriefs = {
+  "PK-01": ["Verify click-to-edit and cross-column drag before building more board features.", "A card can move both ways and its new status survives reload.", "Automate edit, drag, and reload with a browser test. Check keyboard status editing manually."],
+  "PK-02": ["Define releases as targets, phases as stages, and milestones as outcomes. Decide how cards link to each.", "A user can assign and filter cards by release, phase, and milestone without changing status.", "Automate assignment, filtering, and invalid relationship checks."],
+  "PK-03": ["Define owner identity, tag scope, and dependency rules. Cover circular dependencies.", "Users can filter by tags and owner, and see why a blocked card cannot start.", "Automate filters, cycle rejection, and unblocking after verification."],
+  "PK-04": ["Specify a resumable workflow from product brief through roadmap and reviewed cards.", "Users can resume a draft and publish approved work exactly once.", "Automate resume, cancellation, stale revisions, and retry without duplicate cards."],
+  "PK-05": ["Choose stable milestone identities and define how renames and date changes appear.", "Comparing two snapshots identifies additions, removals, and edits.", "Automate comparisons for renamed, moved, and removed milestones."],
+  "PK-06": ["Decide credential scope, storage, provider fallback, and context disclosure.", "A user can test, replace, and revoke a key without the saved key appearing in responses.", "Automate credential redaction and revocation with mocked providers."],
+  "PK-07": ["Define read scopes first, then separately decide write permissions and audit requirements.", "A connected tool can read authorized cards and cannot access other products.", "Automate allowed, denied, expired, and revoked credential cases."],
+  "PK-08": ["Define workspace roles and migration from privately owned products.", "Existing owners retain access and invited users can only perform permitted operations.", "Automate a role matrix and cross-workspace isolation checks."],
+  "PK-09": ["Define which unresolved bugs block release and what counts as verification evidence.", "Release readiness explains every blocking bug and why it blocks.", "Automate readiness changes when a bug fails, passes, or is reopened."],
+  "PK-10": ["Define saved filter behavior and the portfolio fields users need across products.", "Users can restore a view and find upcoming or blocked work across authorized products.", "Automate filter restoration and visibility boundaries."],
+  "PK-11": ["Define deployment and publication gates using fictional data and fresh-install instructions.", "A clean install completes the documented flow and tracked files contain no private project data.", "Run build and migration checks, then verify browser sign-in, card moves, roadmap history, and AI approval."],
+};
+for (const card of cards) {
+  const brief = planningBriefs[card[0]];
+  if (!brief) continue;
+  card[8] ??= {required:true, plan:brief[2], result:"Pending", evidence:""};
+  card[9] ??= {required:card[2] === "Backlog", approach:brief[0], acceptance:brief[1], approved:false, blockers:[]};
+}
+function planningError(status, plan, cardId) {
+  const early = kind === "bug" ? ["Reported","Triage"] : ["Backlog"];
+  if (early.includes(status)) return "";
+  if (plan?.required && (!plan.approved || !plan.approach.trim() || !plan.acceptance.trim())) {
+    return "Review the implementation plan and acceptance criteria before advancing.";
+  }
+  const affected = (plan?.blockers ?? []).find((id) => {
+    const blocker = cards.find((card) => card[0] === id);
+    return id === cardId || !blocker || !["Done","Closed"].includes(blocker[2]) || !canClose(blocker[2], blocker[8]);
+  });
+  return affected ? "Waiting for " + affected + " to close with any required verification." : "";
+}
+function hasDependencyCycle(cardId, blockers) {
+  const pending = [...blockers];
+  const seen = new Set();
+  while (pending.length) {
+    const id = pending.pop();
+    if (id === cardId) return true;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    pending.push(...(cards.find((card) => card[0] === id)?.[9]?.blockers ?? []));
+  }
+  return false;
+}
+const progressKey = "projectkanban-progress-v1";
+let progressApplied = false;
+try { progressApplied = localStorage.getItem(progressKey) === "done"; } catch {}
+if (!progressApplied) {
+  for (const [id, previous] of [["PK-01","Review"],["PK-02","Backlog"],["PK-03","Backlog"],["PK-12",null]]) {
+    const source = initial.find((card) => card[0] === id);
+    const existing = cards.find((card) => card[0] === id);
+    if (id === "PK-12" && existing && existing[3] !== source[3]) {
+      if (!cards.some((card) => card[3] === source[3])) cards.push(["PK-" + crypto.randomUUID().slice(0, 8).toUpperCase(), ...source.slice(1), nextRelease.name, "Verify", "Board improvements"]);
+      continue;
+    }
+    if (!existing) cards.push([...source, nextRelease.name, "Verify", "Board improvements"]);
+    else if (existing[2] === previous) existing[2] = source[2];
+  }
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(cards));
+    localStorage.setItem(progressKey, "done");
+  } catch {}
+}
+const teamProgressKey = "projectkanban-team-progress-v1";
+let teamProgressApplied = false;
+try { teamProgressApplied = localStorage.getItem(teamProgressKey) === "done"; } catch {}
+if (!teamProgressApplied) {
+  const previousStages = {"PK-02": "In Progress", "PK-03": "In Progress", "PK-04": "Backlog", "PK-05": "Backlog", "PK-06": "Backlog", "PK-07": "Backlog", "PK-08": "Backlog", "PK-09": "Backlog", "PK-10": "Backlog", "PK-11": "Backlog"};
+  for (const card of cards) {
+    const update = initial.find((entry) => entry[0] === card[0] && entry[3] === card[3]);
+    if (update && card[2] === previousStages[card[0]]) {
+      card[2] = update[2];
+      if (card[5] === nextRelease.name) card[6] = card[2] === "Review" ? "Verify" : "Build";
+    }
+  }
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(cards));
+    localStorage.setItem(teamProgressKey, "done");
+  } catch {}
+}
+let kind = "development";
+let current = null;
+const editor = byId("editor");
+const form = byId("edit");
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function persist() {
+  try {localStorage.setItem(storageKey, JSON.stringify(cards)); byId("save-status").textContent = "Saved locally";}
+  catch {byId("save-status").textContent = "Browser storage unavailable";}
+  render();
+}
+function openCard(card) {
+  current = card;
+  const plan = card?.[9];
+  form.elements.planningRequired.checked = plan?.required ?? false;
+  form.elements.implementation.value = plan?.approach ?? "";
+  form.elements.acceptance.value = plan?.acceptance ?? "";
+  form.elements.planApproved.checked = plan?.approved ?? false;
+  form.elements.blockers.replaceChildren(...cards.filter((item) => item[0] !== card?.[0]).map((item) =>
+    new Option(item[0] + " · " + item[3], item[0], false, plan?.blockers.includes(item[0]) ?? false)));
+  const test = card?.[8];
+  form.elements.testRequired.checked = test?.required ?? false;
+  form.elements.testPlan.value = test?.plan ?? "";
+  form.elements.testResult.value = test?.result ?? "Pending";
+  form.elements.evidence.value = test?.evidence ?? "";
+  byId("card-error").textContent = "";
+  byId("editor-title").textContent = card ? card[0] : "New card";
+  byId("plan").hidden = true;
+  form.hidden = false;
+  form.elements.title.value = card?.[3] ?? "";
+  form.elements.details.value = card?.[4] ?? "";
+  form.elements.status.replaceChildren(...columns[kind].map((status) => new Option(status, status)));
+  form.elements.status.value = card?.[2] ?? columns[kind][0];
+  form.elements.release.replaceChildren(new Option("Unassigned",""), ...releases.map(({name}) => new Option(name,name)));
+  form.elements.release.value = card?.[5] ?? "";
+  releaseOptions();
+  form.elements.phase.value = card?.[6] ?? "";
+  form.elements.milestone.value = card?.[7] ?? "";
+  editor.showModal();
+}
+function render() {
+  const board = byId("board");
+  board.replaceChildren();
+  for (const status of columns[kind]) {
+    const group = cards.filter((card) => card[1] === kind && card[2] === status);
+    const column = element("section","column");
+    const heading = element("header","");
+    const dot = element("span","status-dot"); dot.dataset.status = status;
+    heading.append(dot,element("h2","",status),element("span","count",String(group.length)));
+    column.append(heading);
+    column.ondragover = (event) => {event.preventDefault(); column.classList.add("over");};
+    column.ondragleave = () => column.classList.remove("over");
+    column.ondrop = (event) => {
+      event.preventDefault();
+      const card = cards.find((item) => item[0] === event.dataTransfer.getData("text/plain") && item[1] === kind);
+      const blocked = card && planningError(status, card[9], card[0]);
+      if (blocked) byId("save-status").textContent = blocked;
+      else if (card && canClose(status, card[8])) {card[2] = status; persist();}
+      else if (card) byId("save-status").textContent = "Add a passing test result and evidence before closing.";
+      column.classList.remove("over");
+    };
+    for (const card of group) {
+      const item = element("article","issue");
+      item.draggable = true;
+      item.ondragstart = (event) => event.dataTransfer.setData("text/plain", card[0]);
+      const title = element("button","issue-title",card[3]);
+      title.onclick = () => openCard(card);
+      const top = element("div","issue-top");
+      const dots = element("div","issue-indicators");
+      const blocked = (card[9]?.blockers ?? []).some((id) => {
+        const prerequisite = cards.find((entry) => entry[0] === id);
+        return !prerequisite || !["Done","Closed"].includes(prerequisite[2]) || !canClose(prerequisite[2], prerequisite[8]);
+      });
+      const dot = (text, tone, symbol) => {
+        const indicator = element("span","issue-indicator",symbol);
+        indicator.title = text;
+        indicator.setAttribute("role","img");
+        indicator.setAttribute("aria-label",text);
+        indicator.tabIndex = 0;
+        indicator.dataset.tone = tone;
+        dots.append(indicator);
+      };
+      if (card[9]?.required) dot(card[9].approved ? "Plan reviewed" : "Plan needs review", card[9].approved ? "passed" : "plan", "P");
+      if (card[8]?.required) dot("Verification: " + card[8].result, card[8].result.toLowerCase(), "T");
+      if (blocked) dot("Waiting on prerequisites", "failed", "!");
+      item.dataset.state = blocked ? "blocked" : ["Done","Closed"].includes(status) ? "done" :
+        ["Review","Verify"].includes(status) ? "review" : ["In Progress","Fixing"].includes(status) ? "active" : "queued";
+      top.append(element("span","issue-id",card[0]), dots);
+      item.append(top, title);
+      const tags = element("div","tags");
+      if (card[5]) tags.append(element("span","",card[5]));
+      if (card[7]) tags.append(element("span","",card[7]));
+      if (tags.childElementCount) item.append(tags);
+      const latest = initial.find((row) => row[0] === card[0]);
+      if (latest && latest[3] === card[3]) {
+        item.append(element("p","muted",latest[4]));
+      }
+      column.append(item);
+    }
+    board.append(column);
+  }
+}
+for (const name of Object.keys(columns)) byId(name).onclick = () => {
+  kind = name;
+  for (const tab of Object.keys(columns)) byId(tab).setAttribute("aria-pressed", String(tab === kind));
+  render();
+};
+byId("new").onclick = () => openCard(null);
+byId("close").onclick = () => editor.close();
+function renderReleases() {
+  byId("release-list").replaceChildren(...releases.map((release) => {
+    const row = element("article","proposal");
+    row.append(element("h3","",release.name), element("p","","Phases: " + release.phases.join(", ")),
+      element("p","","Milestones: " + release.milestones.join(", ")));
+    return row;
+  }));
+}
+form.elements.release.onchange = releaseOptions;
+byId("release-form").onsubmit = (event) => {
+  event.preventDefault();
+  const input = new FormData(event.currentTarget);
+  const name = String(input.get("release")).trim();
+  const lines = (field) => [...new Set(String(input.get(field)).split(/\r?\n/).map((line) => line.trim()).filter(Boolean))];
+  const phases = lines("phases");
+  const milestones = lines("milestones");
+  if (!name || !phases.length || !milestones.length || releases.some((release) => release.name.toLowerCase() === name.toLowerCase())) {
+    byId("release-error").textContent = "Enter a unique release name and at least one phase and milestone.";
+    return;
+  }
+  releases.push({name, phases, milestones});
+  try {localStorage.setItem(releaseKey, JSON.stringify(releases)); byId("release-error").textContent = "";}
+  catch {byId("release-error").textContent = "Browser storage unavailable. This release lasts until reload.";}
+  event.currentTarget.reset();
+  renderReleases();
+};
+byId("roadmap").onclick = () => {
+  renderReleases();
+  byId("editor-title").textContent = "ProjectKanban roadmap";
+  form.hidden = true; byId("plan").hidden = false; editor.showModal();
+};
+form.onsubmit = (event) => {
+  event.preventDefault();
+  const title = form.elements.title.value.trim();
+  if (!title) {form.elements.title.focus(); return;}
+  const fields = [kind, form.elements.status.value, title, form.elements.details.value, form.elements.release.value, form.elements.phase.value, form.elements.milestone.value];
+  const test = {required: form.elements.testRequired.checked, plan: form.elements.testPlan.value,
+    result: form.elements.testResult.value, evidence: form.elements.evidence.value};
+  if (!canClose(fields[1], test)) {
+    byId("card-error").textContent = "Add a test plan, passing result, and evidence before closing.";
+    return;
+  }
+  const plan = {required: form.elements.planningRequired.checked, approach: form.elements.implementation.value,
+    acceptance: form.elements.acceptance.value, approved: form.elements.planApproved.checked,
+    blockers: Array.from(form.elements.blockers.selectedOptions, (option) => option.value)};
+  const error = hasDependencyCycle(current?.[0], plan.blockers) ? "These dependencies form a cycle." : planningError(fields[1], plan, current?.[0]);
+  if (error) {byId("card-error").textContent = error; return;}
+  fields.push(test, plan);
+  if (current) current.splice(1,9,...fields);
+  else cards.push(["PK-" + crypto.randomUUID().slice(0, 8).toUpperCase(), ...fields]);
+  persist(); editor.close();
+};
+render();
+</script>
+<style>.sheet [hidden]{display:none!important}.sheet h3{font-weight:650;margin-bottom:8px}.sheet section p{line-height:1.6}.issue[draggable=true]{cursor:grab}.board .column.over{border-color:var(--accent)}</style>
+</body></html>

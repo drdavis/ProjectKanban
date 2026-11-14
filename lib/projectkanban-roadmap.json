@@ -1,0 +1,15 @@
+[
+  ["PK-01", "development", "Review", "Move and edit cards in the local preview", "Local card editing and drag are implemented. Browser drag and reload verification remain."],
+  ["PK-02", "development", "Review", "Add releases, phases, and milestones", "Authenticated release, phase, and milestone assignments and phase filtering implemented. Verify database round trip."],
+  ["PK-03", "development", "Review", "Add owners, tags, and dependencies", "Responsible person, topic tags, filtering, and enforced dependencies implemented. Verify authenticated flows."],
+  ["PK-04", "development", "In Progress", "Embed guided product and release planning", "Guided draft and transactional publish implemented. Structured release links and AI assistance remain."],
+  ["PK-05", "development", "Review", "Compare roadmap versions", "Roadmap comparison implemented. Verify comparison with persisted versions."],
+  ["PK-06", "development", "Review", "Add AI provider settings", "Provider settings and encrypted personal credentials implemented. Test live connections."],
+  ["PK-07", "development", "In Progress", "Connect coding tools through MCP", "Read-only MCP and revocable tokens implemented. Verify live reads and add scoped write tools."],
+  ["PK-08", "development", "Review", "Add shared workspaces and roles", "Product sharing with viewer and editor roles implemented. Verify live permission boundaries."],
+  ["PK-09", "development", "In Progress", "Add bug triage and release readiness", "Release readiness and bug intake template implemented. Verify the live triage workflow."],
+  ["PK-10", "development", "Review", "Add saved views and portfolio overview", "Browser-local saved views and portfolio filters implemented. Verify cross-product access and restoration."],
+  ["PK-11", "development", "In Progress", "Verify test deployment and prepare public release", "Local release checks in progress. Live test deployment, clean install, and public release remain."],
+  ["PK-12", "development", "Review", "Carry planning and verification into the authenticated app", "Card planning, approval, blockers, and verification persist through server writes. TypeScript, migration check, and production build passed. Verify the complete dependency flow with fictional data before closing."],
+  ["PK-13", "development", "Backlog", "Save screenshots and documents as card attachments", "Support clipboard paste, file picker and drag and drop. Verify private storage, authorization, persistence after reload, preview/download and file validation."]
+]
