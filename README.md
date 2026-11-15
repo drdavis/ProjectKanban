@@ -2,6 +2,12 @@
 
 ProjectKanban tracks multiple products in a searchable catalog. Each product has a roadmap, a Development board, a Bug Fixes board, an activity log, and its own AI planning context. The app includes optional fictional sample products with a roadmap, a development card, and a bug card. Each product has a timestamped roadmap history that records changes when you save the roadmap.
 
+## Connect your coding tool
+
+Open a product’s **MCP access** panel for step-by-step setup with copy buttons. Use a product token with `/api/mcp`; the token selects the product.
+
+**[Complete MCP setup and troubleshooting guide](docs/mcp.md)** — Codex Desktop, exact header fields, multiple products, connection verification, and the separate optional OAuth setup.
+
 ## Run locally
 
 1. Install dependencies with `npm install` using Node.js 24.

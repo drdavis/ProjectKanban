@@ -402,7 +402,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           </div>
         </section>)}
       </>}
-      {panel === "mcp" && product && isOwner && <McpAccess key={product.id} productId={product.id}/>}
+      {panel === "mcp" && product && isOwner && <McpAccess key={product.id} productId={product.id} productName={product.name}/>}
       {panel === "members" && product && isOwner && <MemberPanel key={product.id} productId={product.id}/>}
       {panel === "planning" && product && <PlanningWizard key={product.id} ownerId={userId ?? product.owner}
         productId={product.id} productName={product.name} roadmap={product.roadmap} revision={product.revision} publish={async (plan, revision) => {
