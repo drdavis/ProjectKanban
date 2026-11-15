@@ -1,5 +1,6 @@
 "use client";
 
+import { phaseTint } from "../lib/phase-colors";
 import { CardBrief, structuredExecution } from "./card-brief";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -51,7 +52,7 @@ async function request<T>(productId?: string, command?: z.input<typeof mutation>
 
 function IssueCard({card, open, disabled}: {card: Card; open: () => void; disabled: boolean}) {
   const sortable = useSortable({id: card.id, data: {status: card.status}, disabled});
-  return <article ref={sortable.setNodeRef} style={{transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition}}
+  return <article ref={sortable.setNodeRef} style={{transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition, background: `linear-gradient(145deg, #ffffffee, ${phaseTint(card.roadmapAssignment?.phase)})`}}
     data-state={["Done", "Closed"].includes(card.status) ? "done" : ["Review", "Verify"].includes(card.status) ? "review" : ["In Progress", "Fixing"].includes(card.status) ? "active" : "queued"} className={"issue" + (sortable.isDragging ? " dragging" : "")}>
     <div className="issue-top">
       <span className="issue-id">{card.id.slice(0, 7).toUpperCase()}</span>
@@ -62,6 +63,7 @@ function IssueCard({card, open, disabled}: {card: Card; open: () => void; disabl
       </div>
       <button className="grip" {...sortable.attributes} {...sortable.listeners} aria-label={"Drag " + card.title}><GripVertical size={16}/></button>
     </div>
+    <div className="card-phase">{card.roadmapAssignment?.phase || "No phase"}{card.roadmapAssignment?.milestone && <span> · {card.roadmapAssignment.milestone}</span>}</div>
     <button className="issue-title" onClick={open}>{card.title}</button>
     {(card.priority !== "Normal" || card.severity || card.tags.length > 0) && <div className="tags">
       {card.priority !== "Normal" && <span data-priority={card.priority}>{card.priority} priority</span>}
@@ -232,9 +234,13 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
             </select>
           </label>)}
         </div>}
+        <div className="phase-legend" aria-label="Card background colors by phase"><strong>Phase colors</strong>
+          {[...new Set(product.releases.flatMap(release => release.phases).concat(snapshot!.cards.map(item => item.roadmapAssignment?.phase || "").filter(Boolean)))].map(name => <span key={name}><i aria-hidden="true" style={{background: phaseTint(name)}}/>{name}</span>)}
+          <span><i aria-hidden="true" style={{background: phaseTint()}}/>No phase</span>
+        </div>
         <div className="workspace-board-options">
         <details className="board-legend"><summary>Board legend</summary><div>
-          <p><strong>Card color</strong> · Neutral: queued · Blue: active · Amber: review · Green: complete</p>
+          <p><strong>Card background</strong> · Project phase (see Phase colors). Columns show workflow status; milestone names appear below the card ID.</p>
           <p><strong>P</strong> Planning · Blue: needs review · Green: reviewed</p>
           <p><strong>T</strong> Testing · Amber: pending · Green: passed · Red: failed</p>
         </div></details>

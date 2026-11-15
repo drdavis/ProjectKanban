@@ -221,3 +221,10 @@ input,select,textarea {background:var(--surface);}
   .workspace-commands .button { padding-inline: 8px; }
   .workspace-board-bar label { width: 100%; }
 }
+
+/* Phase tint carries project context; status stays in the column headings. */
+.phase-legend { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; margin:12px 0; font-size:12px; color:var(--text); }
+.phase-legend span { display:inline-flex; align-items:center; gap:6px; }
+.phase-legend i { width:14px; height:14px; border-radius:4px; border:1px solid #50685a35; }
+.card-phase { margin-top:8px; color:#46584f; font-size:11px; font-weight:600; overflow-wrap:anywhere; }
+.card-phase span { font-weight:400; }
