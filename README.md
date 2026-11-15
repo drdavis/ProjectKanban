@@ -7,7 +7,8 @@ ProjectKanban tracks multiple products in a searchable catalog. Each product has
 1. Install dependencies with `npm install` using Node.js 24.
 2. Copy `.env.example` to `.env.local`. Create a Neon PostgreSQL database and enable Neon Auth with Better Auth on its branch. Set NEON_AUTH_BASE_URL to the branch auth endpoint and generate NEON_AUTH_COOKIE_SECRET with openssl rand -base64 32. Use the pooled URL for `DATABASE_URL` and the direct URL for `DATABASE_URL_UNPOOLED`. Configure an AI provider if you want to use the planner. For internal use, restrict account registration through Neon Auth.
 3. Apply the database schema with `node --env-file=.env.local node_modules/drizzle-kit/bin.cjs migrate`.
-4. Start the app with `npm run dev` and sign in at http://localhost:3000.
+4. Set `AUTH_ALLOWED_EMAILS` to the first owner's email and verify that email in Neon Auth. Existing product owners and explicitly assigned product members retain application access. Public signup and social sign-in routes are blocked; a provider account alone does not grant workspace access. Keep signup disabled in Neon Auth too.
+5. Start the app with `npm run dev` and sign in at http://localhost:3000.
 
 Set the same variables in Vercel before deploying. Use separate credentials and databases for production and development. Apply the migration to the target database before the first deployment.
 
