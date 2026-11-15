@@ -1,6 +1,8 @@
 "use client";
 
 import { phaseTint } from "../lib/phase-colors";
+import { defaultQualityPolicy, type QualityPolicy } from "../lib/quality-policy";
+import { CardAttachments } from "./card-attachments";
 import { CardBrief, structuredExecution } from "./card-brief";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -30,6 +32,7 @@ type Kind = z.infer<typeof kind>;
 type Operation = z.infer<typeof planSchema>["operations"][number];
 export type Snapshot = {
   product: Product;
+  policy?: QualityPolicy;
   role?: "owner" | "editor" | "viewer";
   cards: Card[];
   proposals: Array<Omit<typeof proposals.$inferSelect, "operations"> & { operations: Operation[] }>;
@@ -246,7 +249,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         </div></details>
         {!preview && <SavedViews key={product.id} storageKey={"projectkanban-views:" + userId + ":" + product.id}
           board={board} filter={filter} phase={phase} tag={tag} responsible={responsible} apply={(view) => {setBoard(view.board); setFilter(view.filter); setPhase(view.phase); setTag(view.tag); setResponsible(view.responsible);}}/>}
-        <ReleaseReadiness key={product.id} cards={snapshot!.cards} releases={product.releases} open={(issue) => openCard(issue.status, issue)}/>
+        <ReleaseReadiness policy={snapshot?.policy} key={product.id} cards={snapshot!.cards} releases={product.releases} open={(issue) => openCard(issue.status, issue)}/>
         </div>
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={drag}>
           <div className="board">{workflows[board].map((status) => <Column key={status} status={status}
@@ -287,6 +290,11 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         {canEdit && <ReleaseForm busy={busy} commit={(fields) => save({
           action: "roadmap.release.save", productId: product.id, revision: product.revision, fields,
         }, false)}/>}
+        {isOwner && !preview && <form onSubmit={event=>{const values=form(event);save({action:"quality.policy",productId:product.id,revision:product.revision,fields:{requireStructuredBrief:values.has("requireStructuredBrief"),requireBugDetails:values.has("requireBugDetails"),allowOwnerExceptions:values.has("allowOwnerExceptions")}},false);}}>
+          <h3>Quality policy</h3><p>Passing tests and evidence are always required to close work. Changes and exceptions are recorded in history.</p>
+          {([ ["requireStructuredBrief","Require structured development details before starting"], ["requireBugDetails","Require detailed reproduction information before fixing"], ["allowOwnerExceptions","Allow the owner to waive readiness fields with a written reason"] ] as const).map(([name,label])=><label className="checkbox" key={name}><input type="checkbox" name={name} defaultChecked={(snapshot?.policy??defaultQualityPolicy)[name]}/>{label}</label>)}
+          <Button type="submit" disabled={busy}>Save quality policy</Button>
+        </form>}
         <h3>Roadmap history</h3>
         <RoadmapComparison versions={snapshot!.roadmapVersions}/>
         {snapshot!.roadmapVersions.length === 0 && <p>No saved roadmap versions yet.</p>}
@@ -336,7 +344,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <label>Priority<select name="priority" defaultValue={card?.priority ?? "Normal"}>{priority.options.map((item) => <option key={item}>{item}</option>)}</select></label>
           {kind === "bug" && <label>Severity<select name="severity" defaultValue={card?.severity ?? ""}>{severity.options.map((item) => <option key={item} value={item}>{item || "Unset"}</option>)}</select></label>}
         </div>
-        <CardBrief key={kind} kind={kind} execution={card?.execution} card={card} related={(snapshot?.cards ?? []).filter(item => item.id !== card?.id)}/>
+        <CardBrief policy={snapshot?.policy} key={kind} kind={kind} execution={card?.execution} card={card} related={(snapshot?.cards ?? []).filter(item => item.id !== card?.id)}/>
         <label>Additional context / legacy description<textarea name="description" rows={4} maxLength={10000} defaultValue={card?.description}/></label>
         <label>Acceptance criteria — observable outcomes<textarea name="criteria" rows={4} maxLength={10000} defaultValue={card?.criteria}/></label>
         <details open={Boolean(card?.execution?.planningRequired || card?.execution?.verificationRequired)}>
@@ -354,8 +362,15 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         </details>
         <label>GitHub issue or pull request URL<input name="link" type="url" defaultValue={card?.link}/></label>
         {card?.link && <a href={card.link} target="_blank" rel="noreferrer">Open linked work</a>}
+        {!preview && <CardAttachments productId={product.id} cardId={card?.id} canEdit={canEdit}/>}
         <Button type="submit" disabled={busy || !canEdit}>Save card</Button>
       </form>}
+      {panel === "card" && card && product && isOwner && snapshot?.policy?.allowOwnerExceptions && !preview && <details><summary>Owner readiness exception</summary><form onSubmit={event=>{const values=form(event);save({action:"card.exception",productId:product.id,revision:product.revision,cardId:card.id,status:String(values.get("destination")),reason:String(values.get("reason"))});}}>
+        <p>This applies only to this transition. Dependency checks and passing completion evidence cannot be waived. Save your card edits first.</p>
+        <label>Destination<select name="destination">{workflows[kind].map(status=><option key={status}>{status}</option>)}</select></label>
+        <label>Reason and risk accepted<textarea name="reason" required minLength={20} maxLength={2000}/></label>
+        <Button type="submit" disabled={busy}>Record exception and move</Button>
+      </form></details>}
       {panel === "provider" && !preview && <ProviderSettings/>}
       {panel === "ai" && product && <>
         {product.aiEnabled ? <form onSubmit={(event) => {

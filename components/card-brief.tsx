@@ -1,4 +1,5 @@
 "use client";
+import type { QualityPolicy } from "../lib/quality-policy";
 import type { Execution } from "../lib/card-quality";
 import { qualityIssues } from "../lib/card-quality";
 
@@ -16,12 +17,12 @@ const bug = [
   ["regressionTest", "Regression test and its result"], ["fixedIn", "Fixed-in version / release"],
 ] as const;
 
-export function CardBrief({kind, execution, related, card}: {
-  kind: "development" | "bug"; execution?: Execution | null;
+export function CardBrief({kind, execution, related, card, policy}: {
+  policy?: QualityPolicy; kind: "development" | "bug"; execution?: Execution | null;
   related: {id: string; title: string}[];
   card?: {kind: string; status: string; criteria: string; severity: string; execution: Execution | null};
 }) {
-  const missing = card ? qualityIssues(card, kind === "bug" ? "Closed" : "Done") : [];
+  const missing = card ? qualityIssues(card, kind === "bug" ? "Closed" : "Done", policy) : [];
   return <>
     <p className="muted">Save an incomplete idea in {kind === "bug" ? "Reported or Triage" : "Backlog"}. Complete the brief and test plan before starting work. Keep acceptance criteria separate from test evidence.</p>
     {missing.length > 0 && <details><summary>Still needed before completion · {missing.length}</summary>
@@ -40,7 +41,7 @@ export function CardBrief({kind, execution, related, card}: {
         <label>Duplicate of<select name="bug.duplicateOf" defaultValue={execution?.bug?.duplicateOf ?? ""}>
           <option value="">Not a duplicate</option>{related.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
         </select></label>
-        <p className="muted">“Not reproduced” does not mean fixed. Record investigation findings and retest evidence. Use sanitized logs and links in the evidence field; attachment uploads are still planned.</p>
+        <p className="muted">“Not reproduced” does not mean fixed. Record investigation findings and retest evidence. Use sanitized logs and links in the evidence field; attach screenshots or documents in the Attachments section.</p>
       </>}
       <label>Parent outcome / card<select name="parentId" defaultValue={execution?.parentId ?? ""}>
         <option value="">No parent</option>{related.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
@@ -58,10 +59,12 @@ export function structuredExecution(values: FormData, previous?: Execution | nul
   const object = (prefix: string) => Object.fromEntries([...values.entries()].filter(([key]) => key.startsWith(prefix + "."))
     .map(([key,value]) => [key.slice(prefix.length + 1), String(value)]));
   const kind = values.get("kind");
+  const hasBrief = previous?.brief || Object.values(object("brief")).some(value=>value.trim());
+  const hasBug = previous?.bug || Object.entries(object("bug")).some(([key,value])=>!["reproduction","duplicateOf"].includes(key) && value.trim());
   return {
     ...previous,
-    ...(kind === "bug" ? {bug: {...previous?.bug, ...object("bug"), duplicateOf: String(values.get("bug.duplicateOf") ?? "") || null}}
-      : {brief: {...previous?.brief, ...object("brief")}}),
+    ...(kind === "bug" && hasBug ? {bug: {...previous?.bug, ...object("bug"), duplicateOf: String(values.get("bug.duplicateOf") ?? "") || null}}
+      : kind === "development" && hasBrief ? {brief: {...previous?.brief, ...object("brief")}} : {}),
     parentId: String(values.get("parentId") ?? "") || null,
   };
 }

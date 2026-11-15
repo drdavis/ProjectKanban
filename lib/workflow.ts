@@ -1,3 +1,4 @@
+import { qualityPolicyFields } from "./quality-policy";
 import { executionFields } from "./card-quality.ts";
 import { publishedPlan } from "./planning";
 import { releaseFields, roadmapAssignmentFields } from "./roadmap";
@@ -36,6 +37,8 @@ export const productFields = z.object({
 });
 const id = z.uuid();
 export const mutation = z.discriminatedUnion("action", [
+  z.object({action:z.literal("quality.policy"),productId:id,revision:z.number().int(),fields:qualityPolicyFields}),
+  z.object({action:z.literal("card.exception"),productId:id,revision:z.number().int(),cardId:id,status:z.string().max(30),reason:z.string().trim().min(20).max(2000)}),
   z.object({action: z.literal("product.create"), fields: productFields}),
   z.object({action: z.literal("product.import"), names: z.array(z.enum(Object.keys(sampleProducts) as [keyof typeof sampleProducts, ...(keyof typeof sampleProducts)[]])).min(1).max(3)}),
   z.object({action: z.literal("roadmap.release.save"), releaseId: id.optional(), productId: id, revision: z.number().int(), fields: releaseFields}),

@@ -1,5 +1,6 @@
 "use client";
 
+import type { QualityPolicy } from "../lib/quality-policy";
 import { qualityIssues } from "../lib/card-quality";
 import { useState } from "react";
 import type { cards } from "../lib/schema";
@@ -7,14 +8,14 @@ import { Button } from "./ui/button";
 
 type Card = typeof cards.$inferSelect;
 
-export function ReleaseReadiness({cards, releases, open}: {cards: Card[]; releases: {id: string; name: string}[]; open: (card: Card) => void}) {
+export function ReleaseReadiness({cards, releases, open, policy}: {policy?: QualityPolicy; cards: Card[]; releases: {id: string; name: string}[]; open: (card: Card) => void}) {
   const [releaseId, setReleaseId] = useState("");
   const scope = releaseId ? cards.filter((card) => card.roadmapAssignment?.releaseId === releaseId) : cards;
-  const finished = new Set(cards.filter((card) => ["Done", "Closed"].includes(card.status) && qualityIssues(card).length === 0 &&
+  const finished = new Set(cards.filter((card) => ["Done", "Closed"].includes(card.status) && qualityIssues(card,card.status,policy).length === 0 &&
     (!card.execution?.verificationRequired || (card.execution.result === "Passed" &&
       card.execution.testPlan.trim() && card.execution.evidence.trim()))).map((card) => card.id));
   const concerns = scope.filter((card) => !finished.has(card.id)).flatMap((card) => {
-    const reasons = qualityIssues(card, card.kind === "bug" ? "Closed" : "Done").map(label => "Needs " + label.toLowerCase());
+    const reasons = qualityIssues(card, card.kind === "bug" ? "Closed" : "Done",policy).map(label => "Needs " + label.toLowerCase());
     if (card.kind === "bug" && ["Critical", "Major"].includes(card.severity)) reasons.push("Open " + card.severity.toLowerCase() + " bug");
     if (card.kind === "bug" && card.status === "Verify") reasons.push("Fix awaiting verification");
     if (card.execution?.verificationRequired && card.execution.result === "Failed") reasons.push("Verification failed");

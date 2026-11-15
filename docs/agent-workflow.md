@@ -21,7 +21,7 @@ A draft can stay in Backlog while questions remain. Ready and later require acce
 
 Capture reporter/time, affected version/build, environment/browser/device, preconditions, numbered reproduction steps, expected and actual behavior, frequency, impact, severity and priority. Use Reported or Triage for missing information. Preserve unknowns rather than inventing them.
 
-A report can be Confirmed, Intermittent or Not reproduced. An unreproduced bug needs investigation evidence before advancing; it is not automatically resolved. Link duplicates to the original within the same product, preserving both reports. Sanitized log references can go in evidence; attachment upload is a separate roadmap item and is not provided by this workflow release.
+A report can be Confirmed, Intermittent or Not reproduced. An unreproduced bug needs investigation evidence before advancing; it is not automatically resolved. Link duplicates to the original within the same product, preserving both reports. Sanitized log references can go in evidence; screenshots and documents can be uploaded in the card’s Attachments section. MCP returns attachment metadata; downloads require an authenticated browser session.
 
 Before closure, record root-cause findings (or explicitly state that the cause is unresolved), fix summary, regression-test evidence, fixed-in version/release, and passing retest evidence. A successful build alone is insufficient.
 
@@ -41,6 +41,6 @@ Structured data is nested under `execution.brief` and `execution.bug`. Use `exec
 
 ## Compatibility and limits
 
-Existing free-text descriptions and evidence remain unchanged. New cards get structured briefs; legacy cards adopt them when edited through the new form. Legacy cards can still be edited through MCP without inventing structured data, but advancing requires criteria and a test plan, and closure requires evidence. Readiness lists explain missing fields; they are not a predictive quality score.
+Existing free-text descriptions and evidence remain unchanged. New cards get structured briefs; legacy cards adopt them when structured fields are filled in. Legacy cards can still be edited through MCP without inventing structured data, but advancing requires criteria and a test plan, and closure requires evidence. Readiness lists explain missing fields; they are not a predictive quality score.
 
-This release has fixed safety requirements and no quality-gate bypass. Owner-configurable policies and audited exceptions require a separate verified implementation. MCP cannot upload attachments or execute tests itself; the connected coding tool runs tests and records their real results. Host-specific skill auto-installation and background synchronization are not included.
+Owners can configure structured readiness requirements in Roadmap → Quality policy. If enabled, an owner can grant a single-transition readiness exception with a written reason; history records the rationale and waived fields. Dependency checks and passing completion evidence cannot be waived. MCP clients cannot grant exceptions. MCP cannot upload attachments or execute tests itself; the connected coding tool runs tests and records their real results. Host-specific skill auto-installation and background synchronization are not included.

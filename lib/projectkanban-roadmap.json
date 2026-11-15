@@ -23,9 +23,9 @@
   [
     "PK-04",
     "development",
-    "In Progress",
+    "Review",
     "Embed guided product and release planning",
-    "Guided draft and transactional publish implemented. Structured release links and AI assistance remain."
+    "Guided plans now publish real releases, phase/milestone assignments and test plans transactionally. Editable AI drafts and retry-content checks implemented. Live AI/browser acceptance pending."
   ],
   [
     "PK-05",
@@ -58,9 +58,9 @@
   [
     "PK-09",
     "development",
-    "In Progress",
+    "Review",
     "Add bug triage and release readiness",
-    "Release readiness and bug intake template implemented. Verify the live triage workflow."
+    "Structured triage and release readiness use shared quality policy. Functional browser acceptance pending."
   ],
   [
     "PK-10",
@@ -72,9 +72,9 @@
   [
     "PK-11",
     "development",
-    "In Progress",
+    "Review",
     "Verify test deployment and prepare public release",
-    "Production deployment verified Ready from GitHub main. Gitleaks scanned all local Git history: no leaks. 15 tests passed. Authenticated browser, clean install and public release checks remain."
+    "Source has MIT license, developer test commands and an MCP acceptance script. Public visibility, clean-install and authenticated browser verification remain release gates."
   ],
   [
     "PK-12",
@@ -86,9 +86,9 @@
   [
     "PK-13",
     "development",
-    "Backlog",
+    "Review",
     "Save screenshots and documents as card attachments",
-    "Support clipboard paste, file picker and drag and drop. Verify private storage, authorization, persistence after reload, preview/download and file validation."
+    "Private member-authorized paste/drop/file uploads, image previews, downloads and removal implemented. Format/size validation tests pass. Live authorization and upload round-trip pending."
   ],
   [
     "PK-14",
@@ -130,6 +130,6 @@
     "development",
     "Review",
     "Enforce readiness and completion with transparent quality checks",
-    "Shared deterministic checks implemented for UI/API/MCP. Owner-configurable policies and audited exceptions remain outstanding."
+    "Owner-configurable readiness requirements and audited single-transition exceptions implemented; completion evidence and dependencies cannot be waived. Policy regression tests pass; live owner/editor acceptance pending."
   ]
 ]

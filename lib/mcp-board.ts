@@ -1,3 +1,4 @@
+import { readQualityPolicy } from "./quality-policy-store";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { RequestError, saveCard } from "./card-write";
@@ -85,6 +86,7 @@ export async function handleBoardMcp(request: Request, access: {productId: strin
       if (!product) return {error:"Product not found."};
       return {id:product.id,name:product.name,roadmap:product.roadmap,releases:product.releases,repository:product.repository,
         revision:product.revision,workflowVersion,permissions:{read:true,write:access.canWrite,roadmap:!!access.canPlan},
+        qualityPolicy:await db.transaction(tx=>readQualityPolicy(tx,access.productId)),
         policy:"Incomplete cards can remain at intake. Advancing requires acceptance criteria and a test plan; structured briefs/reports have additional requirements. Closing requires passing evidence. Prerequisites must be verified. No automatic overrides."};
     },
     async listCards({board,status,offset,limit}) {
@@ -99,8 +101,10 @@ export async function handleBoardMcp(request: Request, access: {productId: strin
         if (!product) return null;
         const [card]=await tx.select().from(cards).where(and(productScope,eq(cards.id,cardId))).limit(1);
         if (!card) return null;
-        return {...card,board:card.kind,acceptanceCriteria:card.criteria,repository:product.repository,revision:product.revision,
-          readiness:{toStart:qualityIssues(card,card.kind==="bug"?"Ready to Fix":"Ready"),toComplete:qualityIssues(card,card.kind==="bug"?"Closed":"Done")}};
+        const policy=await readQualityPolicy(tx,access.productId);
+        const attachments=await tx.select({id:activity.id,metadata:sql`${activity.after} - 'data'`}).from(activity).where(and(eq(activity.productId,access.productId),eq(activity.action,"Stored attachment"),sql`${activity.after}->>'cardId' = ${cardId}`));
+        return {...card,attachments,board:card.kind,acceptanceCriteria:card.criteria,repository:product.repository,revision:product.revision,
+          readiness:{toStart:qualityIssues(card,card.kind==="bug"?"Ready to Fix":"Ready",policy),toComplete:qualityIssues(card,card.kind==="bug"?"Closed":"Done",policy)}};
       });
     },
   },access.canWrite?writers:undefined);

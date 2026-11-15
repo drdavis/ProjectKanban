@@ -35,7 +35,8 @@ The repo skills are original ProjectKanban workflows. The upstream collections a
 
 | Surface | Purpose |
 |---|---|
-| Column heading and card tint | Workflow status. Neutral for queued, blue for active, amber for review, and green for complete. The standalone board uses red for blocked work. |
+| Column heading | Workflow status, always labeled. |
+| Card tint | Project phase: Planning lavender, Build blue, Verify peach, Release mint; custom phases use stable pastels. A visible legend and phase/milestone text make color supplementary. |
 | Top-right indicators | P means planning, T means testing, and ! means a prerequisite is blocking the card where supported. Colors show the result within each indicator. |
 | Tags | Readable context or urgency. The standalone board shows release and milestone. The authenticated app shows exceptional priority and bug severity. |
 | Card details | Full release and phase assignments, planning decisions, dependencies, test steps, and evidence. |

@@ -1,3 +1,5 @@
+import { readQualityPolicy } from "./quality-policy-store";
+import { exceptionCanWaive } from "./quality-policy";
 import { asc, eq } from "drizzle-orm";
 import type { z } from "zod";
 import type { database } from "./db";
@@ -12,7 +14,7 @@ export class RequestError extends Error {
   constructor(message: string, readonly status = 400) { super(message); }
 }
 
-export async function saveCard(tx: Transaction, productId: string, actor: string, input: z.input<typeof cardFields>, cardId?: string, beforeId?: string | null) {
+export async function saveCard(tx: Transaction, productId: string, actor: string, input: z.input<typeof cardFields>, cardId?: string, beforeId?: string | null, exception?: {reason:string}) {
   const fields = cardFields.parse(input);
   const legal = workflows[fields.kind];
   if (!legal.includes(fields.status)) throw new RequestError("Choose a status on the destination board.");
@@ -36,8 +38,10 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     if (fields.kind === "bug") execution.bug ??= bugFields.parse({});
     else execution.brief ??= briefFields.parse({});
   }
-  const missing = qualityIssues({...fields, execution});
-  if (missing.length) throw new RequestError("Before moving to " + fields.status + ", complete: " + missing.join(", ") + ".");
+  const policy = await readQualityPolicy(tx,productId);
+  const missing = qualityIssues({...fields, execution}, fields.status, policy);
+  const waived = missing.length > 0 && exceptionCanWaive(missing,policy,exception?.reason);
+  if (missing.length && !waived) throw new RequestError("Before moving to " + fields.status + ", complete: " + missing.join(", ") + ".");
   const approved = execution.approved && (!!execution.approach && !!fields.criteria);
   const closed = ["Done", "Closed"];
   const verified = (plan: typeof execution | null) => !plan?.verificationRequired ||
@@ -68,10 +72,10 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     pending.push(...(blocker.execution?.blockers ?? []));
   }
   if (!["Backlog", "Reported", "Triage"].includes(fields.status)) {
-    if (execution.planningRequired && !approved) throw new RequestError("Review the plan and acceptance criteria before advancing.");
+    if (execution.planningRequired && !approved && !waived) throw new RequestError("Review the plan and acceptance criteria before advancing.");
     for (const id of execution.blockers) {
       const blocker = prerequisites.get(id)!;
-      if (!closed.includes(blocker.status) || !verified(blocker.execution) || qualityIssues(blocker).length) {
+      if (!closed.includes(blocker.status) || !verified(blocker.execution) || qualityIssues(blocker, blocker.status, policy).length) {
         throw new RequestError("Waiting for " + blocker.title + " to close with any required verification.");
       }
     }
@@ -96,6 +100,7 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
   const [saved] = previous
     ? await tx.update(cards).set(values).where(eq(cards.id, previous.id)).returning()
     : await tx.insert(cards).values({...values, productId}).returning();
+  if (waived) await tx.insert(activity).values({productId,actor,action:"Granted quality exception",after:{cardId:saved.id,status:fields.status,reason:exception!.reason,waived:missing}});
   await tx.insert(activity).values({productId, actor, action: previous ? "Updated card" : "Created card", before: previous, after: saved});
   return saved;
 }

@@ -1,3 +1,4 @@
+import { defaultQualityPolicy, type QualityPolicy } from "./quality-policy.ts";
 import { z } from "zod";
 
 const text = z.string().trim().max(10000).default("");
@@ -24,19 +25,19 @@ export type QualityCard = {kind: string; status: string; criteria: string; descr
 
 // Unknowns are allowed at intake; readiness and completion use observable requirements.
 // Legacy descriptions remain intact. Structured requirements apply when a brief/report is adopted.
-export function qualityIssues(card: QualityCard, status = card.status): string[] {
+export function qualityIssues(card: QualityCard, status = card.status, policy: QualityPolicy = defaultQualityPolicy): string[] {
   if (["Backlog", "Reported", "Triage"].includes(status)) return [];
   const issues: string[] = [];
   const plan = card.execution;
   const require = (value: string | undefined, label: string) => { if (!value?.trim()) issues.push(label); };
   require(card.criteria, "Acceptance criteria");
   require(plan?.testPlan, "Test plan");
-  if (card.kind === "development" && plan?.brief) {
+  if (policy.requireStructuredBrief && card.kind === "development" && plan?.brief) {
     require(plan.brief.problem, "Problem to solve");
     require(plan.brief.outcome, "Intended outcome");
     require(plan.brief.scope, "Scope");
   }
-  if (card.kind === "bug" && plan?.bug) {
+  if (policy.requireBugDetails && card.kind === "bug" && plan?.bug) {
     const bug = plan.bug;
     for (const [value, label] of [[bug.environment, "Environment"], [bug.affectedVersion, "Affected version"],
       [bug.steps, "Reproduction steps"], [bug.expected, "Expected behavior"], [bug.actual, "Actual behavior"],

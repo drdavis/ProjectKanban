@@ -1,10 +1,12 @@
+import { createHash } from "node:crypto";
+import { readQualityPolicy } from "../../../lib/quality-policy-store";
 import { RequestError, saveCard } from "../../../lib/card-write";
 import { assignmentIsValid } from "../../../lib/roadmap";
 import { sampleProducts } from "../../../lib/samples";
 import { auth } from "../../../lib/auth";
 import { ProviderConfigurationError, resolvePlannerProvider } from "../../../lib/planner-provider";
 import { generateText, Output } from "ai";
-import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or, sql, ne } from "drizzle-orm";
 import { z } from "zod";
 import { database } from "../../../lib/db";
 import { activity, cards, productMembers, products, proposals } from "../../../lib/schema";
@@ -46,11 +48,12 @@ export async function GET(request: Request) {
       if (!role) throw new RequestError("Product not found.", 404);
       return {
         product,
+        policy: await readQualityPolicy(tx,id),
         role,
         cards: await tx.select().from(cards).where(eq(cards.productId, id)).orderBy(asc(cards.position)),
         proposals: role !== "owner" ? [] : await tx.select().from(proposals).where(and(eq(proposals.productId, id), eq(proposals.state, "pending"))).orderBy(desc(proposals.createdAt)).limit(30),
         roadmapVersions: await tx.select().from(activity).where(and(eq(activity.productId, id), eq(activity.action, "Saved roadmap version"))).orderBy(desc(activity.createdAt), desc(activity.id)),
-        activity: await tx.select().from(activity).where(eq(activity.productId, id)).orderBy(desc(activity.createdAt)).limit(50),
+        activity: await tx.select().from(activity).where(and(eq(activity.productId, id), ne(activity.action, "Stored attachment"))).orderBy(desc(activity.createdAt)).limit(50),
       };
     });
     return Response.json(snapshot);
@@ -154,22 +157,38 @@ export async function POST(request: Request) {
         }
       }
       if (input.action === "plan.publish") {
-        const [alreadyPublished] = await tx.select({id: activity.id}).from(activity).where(and(
+        const [alreadyPublished] = await tx.select({id: activity.id,after:activity.after}).from(activity).where(and(
           eq(activity.productId, product.id), eq(activity.action, "Published plan"), sql`${activity.after}->>'requestId' = ${input.plan.requestId}`,
         )).limit(1);
-        if (alreadyPublished) return {ok: true};
+        if (alreadyPublished) {
+          const prior=alreadyPublished.after as {hash?:string};
+          if(prior.hash && prior.hash!==createHash("sha256").update(JSON.stringify(input.plan)).digest("hex"))throw new RequestError("This publish request was already used for different content.",409);
+          return {ok:true};
+        }
       }
       if ("revision" in input && input.revision !== product.revision) throw new RequestError("This board changed. Refresh before applying your edit.", 409);
 
-      if (input.action === "plan.publish") {
-        await tx.update(products).set({roadmap: input.plan.roadmap}).where(target);
+      if (input.action === "quality.policy") {
+        await tx.insert(activity).values({productId:product.id,actor:userId,action:"Changed quality policy",before:await readQualityPolicy(tx,product.id),after:input.fields});
+      } else if (input.action === "card.exception") {
+        const [card]=await tx.select().from(cards).where(and(eq(cards.id,input.cardId),eq(cards.productId,product.id)));
+        if(!card) throw new RequestError("Card not found.",404);
+        await saveCard(tx,product.id,userId,cardFields.parse({...card,execution:card.execution??undefined,status:input.status}),card.id,undefined,{reason:input.reason});
+      } else if (input.action === "plan.publish") {
+        const release=input.plan.release?{...input.plan.release,id:input.plan.requestId}:null;
+        if(release && (product.releases.length>=100 || product.releases.some(item=>item.name.toLowerCase()===release.name.toLowerCase())))throw new RequestError("Choose a unique release name; a product can have up to 100 releases.");
+        const releases=release?[...product.releases,release]:product.releases;
+        await tx.update(products).set({roadmap: input.plan.roadmap,releases}).where(target);
         await tx.insert(activity).values([
           {productId: product.id, actor: userId, action: "Saved roadmap version",
-            after: {roadmap: input.plan.roadmap, releases: product.releases}},
-          {productId: product.id, actor: userId, action: "Published plan", after: {requestId: input.plan.requestId}},
+            after: {roadmap: input.plan.roadmap, releases}},
+          {productId: product.id, actor: userId, action: "Published plan", after: {requestId: input.plan.requestId,hash:createHash("sha256").update(JSON.stringify(input.plan)).digest("hex")}},
         ]);
         for (const card of input.plan.cards) {
-          await saveCard(tx, product.id, userId, {...card, kind: "development", status: "Backlog"});
+          await saveCard(tx, product.id, userId, {...card, kind: "development", status: "Backlog",
+            execution:executionFields.parse({verificationRequired:true,testPlan:card.testPlan}),
+            roadmapAssignment:release?{releaseId:release.id,phase:card.phase||undefined,milestone:card.milestone||undefined}:null,
+          });
         }
       } else if (input.action === "roadmap.release.save") {
         if (!input.releaseId && product.releases.length >= 100) throw new RequestError("This product already has 100 releases.");

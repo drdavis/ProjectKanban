@@ -228,3 +228,7 @@ input,select,textarea {background:var(--surface);}
 .phase-legend i { width:14px; height:14px; border-radius:4px; border:1px solid #50685a35; }
 .card-phase { margin-top:8px; color:#46584f; font-size:11px; font-weight:600; overflow-wrap:anywhere; }
 .card-phase span { font-weight:400; }
+
+.planning-inputs { border:0; padding:0; margin:0; min-width:0; }
+.attachment-panel { border:1px dashed var(--line); border-radius:12px; padding:14px; margin:16px 0; }
+.attachment-panel:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }

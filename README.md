@@ -26,7 +26,7 @@ Set the same variables in Vercel before deploying. Use separate credentials and 
 4. Ask the AI planner for a set of changes. Review the field changes and apply or dismiss the proposal.
 5. Inspect Activity to see updates and their source.
 
-The first release uses private product catalogs per Neon Auth user. The application checks product ownership on every API operation. Product revisions catch stale manual edits and AI plans, and PostgreSQL transactions commit card changes and activity together. GitHub integration currently consists of repository, issue, and pull-request URLs. The product catalog, data model, and planner scope support 20 or more products in one database.
+The first release uses private product catalogs per Neon Auth user. The application checks product ownership or explicit membership on every API operation. Product revisions catch stale manual edits and AI plans, and PostgreSQL transactions commit card changes and activity together. GitHub integration currently consists of repository, issue, and pull-request URLs. The product catalog, data model, and planner scope support 20 or more products in one database.
 
 ## Verification after setup
 
@@ -66,3 +66,15 @@ Run `node --test tests/*.test.mjs` and `npm run typecheck` before a release. Use
 ### Vercel AI Gateway
 
 A Vercel deployment with OIDC enabled can use AI Gateway as the planner default. A deployment can also set `PLANNER_AI_PROVIDER=vercel` explicitly. Set `AI_GATEWAY_API_KEY` as a server-side secret for environments without Vercel OIDC. Override the default model with `AI_GATEWAY_MODEL`. Saved personal connections still take precedence.
+
+## Attachments and quality controls
+
+Save a card, then use **Attachments** to paste screenshots, drop files or choose a file. PNG, JPEG, WebP, PDF and UTF-8 text/Markdown/CSV/JSON files are supported. Images have inline previews; documents download. Each file is limited to 2 MB, and a product to 50 MB. Files are stored privately in PostgreSQL; no public object URL or additional storage service is required. Attachment bytes are excluded from board history and MCP responses. These limits bound database storage cost; base64 storage adds about one third to the raw size. Owners and editors can add/remove files, and all members can download them. Use sanitized files; uploads are format-checked, not malware-scanned.
+
+**Roadmap → Quality policy** lets the owner choose structured readiness requirements and enable explicit, audited readiness exceptions. Exceptions apply to one transition. Dependencies, failed tests and missing completion evidence remain protected.
+
+**Plan product** supports editable AI drafts, real release/phase/milestone assignments and per-card test plans. Publishing commits the roadmap, release and cards together. Retry keys reject changed content and prevent duplicate cards.
+
+Run `npm test` for local checks. For end-to-end MCP checks, use a dedicated test product and set `PROJECTKANBAN_MCP_URL`, `PROJECTKANBAN_MCP_TOKEN` and `PROJECTKANBAN_TEST_PRODUCT_ID`, then run `npm run test:mcp`. This creates one audit-visible test card, verifies retries/conflicts/gates, and closes that test card only after the checks pass. Never commit tokens.
+
+Source code is available under the MIT license. Deployments, user data and credentials are not part of the source license.
