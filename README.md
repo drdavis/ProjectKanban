@@ -52,6 +52,10 @@ To enable personal keys, generate a 32-byte hex secret with `openssl rand -hex 3
 
 Repo-local workflows live in `skills/`. Use `projectkanban-design` for UI work, `projectkanban-design-review` for review, `projectkanban-planning` for specs and tickets, and `projectkanban-architecture` for domain and backend design. See the [design and planning guide](docs/design-and-planning.md) for conventions and upstream references.
 
+## Agent workflow
+
+Connect a product, then copy the opt-in workflow from **MCP access → Add agent workflow guidance** into the coding project’s instructions. [Workflow, structured cards and bug reporting](docs/agent-workflow.md) explains activation, quality checks and MCP updates. Connecting MCP alone does not install skills or run background work.
+
 ## Planning and tracking work
 
 Use **Roadmap** to create releases and compare saved roadmap versions. Assign release, phase, milestone, owner, and topic tags in card details. Use **Plan product** to work through a draft and publish the reviewed roadmap and backlog cards together. Drafts and saved views are stored in the browser. Readiness flags blocked cards, serious bugs, and fixes awaiting verification.

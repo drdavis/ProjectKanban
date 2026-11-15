@@ -96,5 +96,40 @@
     "Review",
     "Enforce invitation-only application access",
     "Block public signup/social login routes and require existing product access or an explicitly allowed verified email. Automated policy tests pass; production verification pending."
+  ],
+  [
+    "PK-15",
+    "development",
+    "Review",
+    "Guide connected agents through planning and execution",
+    "Versioned workflow available in app and through MCP. Copy instructions into the connected project; host-specific automatic installation is not included."
+  ],
+  [
+    "PK-16",
+    "development",
+    "Review",
+    "Extend MCP to maintain complete roadmap and execution records",
+    "Product context, partial card edits, revision checks, retry-safe creates, scoped roadmap writes implemented. Live integration verification pending."
+  ],
+  [
+    "PK-17",
+    "development",
+    "Review",
+    "Introduce structured development-card briefs",
+    "Structured briefs and readiness requirements implemented. Legacy descriptions preserved. Browser round-trip verification pending."
+  ],
+  [
+    "PK-18",
+    "development",
+    "Review",
+    "Capture reproducible bugs and verified resolutions",
+    "Structured intake, reproduction assessment, duplicate links and resolution evidence implemented. Attachment uploads remain PK-13."
+  ],
+  [
+    "PK-19",
+    "development",
+    "Review",
+    "Enforce readiness and completion with transparent quality checks",
+    "Shared deterministic checks implemented for UI/API/MCP. Owner-configurable policies and audited exceptions remain outstanding."
   ]
 ]

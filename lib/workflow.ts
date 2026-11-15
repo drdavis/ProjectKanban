@@ -1,3 +1,4 @@
+import { executionFields } from "./card-quality.ts";
 import { publishedPlan } from "./planning";
 import { releaseFields, roadmapAssignmentFields } from "./roadmap";
 import { sampleProducts } from "./samples";
@@ -11,17 +12,7 @@ export const kind = z.enum(["development", "bug"]);
 export const priority = z.enum(["Urgent", "High", "Normal", "Low"]);
 export const severity = z.enum(["", "Critical", "Major", "Moderate", "Minor"]);
 export const externalLink = z.union([z.literal(""), z.url({protocol: /^https?$/})]).default("");
-export const executionFields = z.object({
-  planningRequired: z.boolean().default(false),
-  approach: z.string().trim().max(10000).default(""),
-  approved: z.boolean().default(false),
-  blockers: z.array(z.uuid()).max(100).default([]),
-  verificationRequired: z.boolean().default(false),
-  testPlan: z.string().trim().max(10000).default(""),
-  result: z.enum(["Pending", "Passed", "Failed"]).default("Pending"),
-  evidence: z.string().trim().max(10000).default(""),
-});
-export type Execution = z.output<typeof executionFields>;
+export { executionFields, type Execution } from "./card-quality.ts";
 
 export const cardFields = z.object({
   kind,
@@ -70,13 +61,14 @@ export const planSchema = z.object({
     severity,
     beforeId: id.nullable(),
     reason: z.string().min(1).max(500),
+    execution: executionFields.nullable().default(null),
   })).min(1).max(25),
 });
 
 
 export function plannerContext(request: string, product: {name: string; roadmap: string}, includeRoadmap: boolean,
-  cards: Array<{id: string; kind: string; status: string; title: string; description: string; criteria: string; priority: string; severity: string}>) {
+  cards: Array<{id: string; kind: string; status: string; title: string; description: string; criteria: string; priority: string; severity: string; execution?: import("./card-quality").Execution | null}>) {
   return {request: request.trim(), product: product.name, ...(includeRoadmap ? {roadmap: product.roadmap} : {}),
-    issues: cards.map(({id, kind, status, title, description, criteria, priority, severity}) =>
-      ({id, kind, status, title, description, criteria, priority, severity}))};
+    issues: cards.map(({id, kind, status, title, description, criteria, priority, severity, execution}) =>
+      ({id, kind, status, title, description, criteria, priority, severity, execution}))};
 }

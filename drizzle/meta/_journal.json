@@ -57,6 +57,13 @@
       "when": 1794664187930,
       "tag": "0007_mcp_card_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794754800000,
+      "tag": "0008_mcp_roadmap_scope",
+      "breakpoints": true
     }
   ]
 }

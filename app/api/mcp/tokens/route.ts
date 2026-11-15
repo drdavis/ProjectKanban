@@ -8,11 +8,11 @@ import { products, mcpTokens } from "../../../../lib/schema";
 export const runtime = "nodejs";
 const productId = z.uuid();
 const operations = z.discriminatedUnion("action", [
-  z.object({action: z.literal("issue"), productId, label: z.string().trim().min(1).max(80), canWrite: z.boolean().default(false)}),
+  z.object({action: z.literal("issue"), productId, label: z.string().trim().min(1).max(80), canWrite: z.boolean().default(false), canPlan: z.boolean().default(false)}),
   z.object({action: z.literal("revoke"), productId, tokenId: z.uuid()}),
 ]);
 const metadata = {
-  id: mcpTokens.id, canWrite: mcpTokens.canWrite, label: mcpTokens.label, createdAt: mcpTokens.createdAt, expiresAt: mcpTokens.expiresAt,
+  id: mcpTokens.id, canWrite: mcpTokens.canWrite, canPlan: mcpTokens.canPlan, label: mcpTokens.label, createdAt: mcpTokens.createdAt, expiresAt: mcpTokens.expiresAt,
 };
 
 function json(body: unknown, status = 200) {
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       if (existing.length >= 100) return json({error: "Revoke an old token before creating another."}, 409);
       const {token, digest} = createMcpToken();
       const [issued] = await tx.insert(mcpTokens).values({
-        productId: product.id, createdBy: userId, label: input.label, canWrite: input.canWrite, digest,
+        productId: product.id, createdBy: userId, label: input.label, canWrite: input.canWrite, canPlan: input.canWrite && input.canPlan, digest,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       }).returning(metadata);
       return json({...issued, token}, 201);

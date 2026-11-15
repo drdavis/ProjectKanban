@@ -57,6 +57,7 @@ export const mcpTokens = pgTable("mcp_tokens", {
   label: text().notNull(),
   digest: text().notNull().unique(),
   canWrite: boolean("can_write").notNull().default(false),
+  canPlan: boolean("can_plan").notNull().default(false),
   createdAt: timestamp("created_at", {withTimezone: true}).notNull().defaultNow(),
   expiresAt: timestamp("expires_at", {withTimezone: true}).notNull(),
 }, (table) => [index("mcp_tokens_product_idx").on(table.productId)]);

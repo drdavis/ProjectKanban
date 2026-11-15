@@ -1,5 +1,7 @@
 "use client";
 
+import { CardBrief, structuredExecution } from "./card-brief";
+
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { closestCorners, DndContext, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -307,6 +309,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
             milestone: String(values.get("milestone") ?? "") || undefined,
           } : null,
           execution: {
+            ...structuredExecution(values, card?.execution),
             planningRequired: values.has("planningRequired"), approach: String(values.get("approach")),
             approved: values.has("approved"), blockers: values.getAll("blockers").map(String),
             verificationRequired: values.has("verificationRequired"), testPlan: String(values.get("testPlan")),
@@ -327,15 +330,9 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <label>Priority<select name="priority" defaultValue={card?.priority ?? "Normal"}>{priority.options.map((item) => <option key={item}>{item}</option>)}</select></label>
           {kind === "bug" && <label>Severity<select name="severity" defaultValue={card?.severity ?? ""}>{severity.options.map((item) => <option key={item} value={item}>{item || "Unset"}</option>)}</select></label>}
         </div>
-        {kind === "bug" && canEdit && <Button variant="outline" onClick={(event) => {
-          const description = event.currentTarget.form?.elements.namedItem("description");
-          if (!(description instanceof HTMLTextAreaElement)) return;
-          const template = "Impact\n\nEnvironment\n\nSteps to reproduce\n1. \n\nExpected behavior\n\nActual behavior\n\nEvidence\n";
-          description.value = description.value.trim() ? description.value + "\n\n" + template : template;
-          description.focus();
-        }}>Insert bug report template</Button>}
-        <label>{kind === "bug" ? "Expected behavior, actual behavior, and environment" : "Description"}<textarea name="description" rows={6} maxLength={10000} defaultValue={card?.description}/></label>
-        <label>{kind === "bug" ? "Verification evidence" : "Acceptance criteria and evidence"}<textarea name="criteria" rows={4} maxLength={10000} defaultValue={card?.criteria}/></label>
+        <CardBrief key={kind} kind={kind} execution={card?.execution} card={card} related={(snapshot?.cards ?? []).filter(item => item.id !== card?.id)}/>
+        <label>Additional context / legacy description<textarea name="description" rows={4} maxLength={10000} defaultValue={card?.description}/></label>
+        <label>Acceptance criteria — observable outcomes<textarea name="criteria" rows={4} maxLength={10000} defaultValue={card?.criteria}/></label>
         <details open={Boolean(card?.execution?.planningRequired || card?.execution?.verificationRequired)}>
           <summary>Planning and verification</summary>
           <label className="checkbox"><input name="planningRequired" type="checkbox" defaultChecked={card?.execution?.planningRequired}/> Require plan review</label>
@@ -344,7 +341,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <label>Blocked by<select name="blockers" multiple defaultValue={card?.execution?.blockers ?? []}>
             {snapshot?.cards.filter((item) => item.id !== card?.id).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
           </select></label>
-          <label className="checkbox"><input name="verificationRequired" type="checkbox" defaultChecked={card?.execution?.verificationRequired}/> Require passing verification before closing</label>
+          <label className="checkbox"><input name="verificationRequired" type="checkbox" defaultChecked={card?.execution?.verificationRequired ?? true}/> Require passing verification before closing</label>
           <label>Test plan<textarea name="testPlan" defaultValue={card?.execution?.testPlan}/></label>
           <label>Test result<select name="result" defaultValue={card?.execution?.result ?? "Pending"}><option>Pending</option><option>Passed</option><option>Failed</option></select></label>
           <label>Evidence<textarea name="evidence" defaultValue={card?.execution?.evidence}/></label>

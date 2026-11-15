@@ -61,8 +61,8 @@ test("MCP exposes writes only with a writer and validates write arguments", asyn
     }), readers, enabled ? writers : undefined);
     return res.json();
   };
-  assert.equal((await call("tools/list")).result.tools.length, 2);
-  assert.equal((await call("tools/list", {}, true)).result.tools.length, 4);
+  assert.deepEqual((await call("tools/list")).result.tools.map(t => t.name), ["list_cards", "get_card", "get_workflow"]);
+  assert.deepEqual((await call("tools/list", {}, true)).result.tools.map(t => t.name), ["list_cards", "get_card", "get_workflow", "create_card", "move_card"]);
   const create = {name:"create_card", arguments:{board:"development",title:"Test"}};
   assert.equal((await call("tools/call", create)).result.isError, true);
   assert.ok((await call("tools/call", {...create, arguments:{...create.arguments, productId: "another"}}, true)).error);

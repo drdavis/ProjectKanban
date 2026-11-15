@@ -4,6 +4,7 @@ import type { database } from "./db";
 import { activity, cards, products } from "./schema";
 import { cardFields, executionFields, workflows } from "./workflow";
 import { assignmentIsValid } from "./roadmap";
+import { qualityIssues, briefFields, bugFields } from "./card-quality";
 
 type Transaction = Parameters<Parameters<ReturnType<typeof database>["transaction"]>[0]>[0];
 
@@ -26,12 +27,35 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     const [product] = await tx.select({releases: products.releases}).from(products).where(eq(products.id, productId));
     if (!product || !assignmentIsValid(assignment, product.releases)) throw new RequestError("Choose a release, phase, and milestone from this product.");
   }
-  const execution = fields.execution ?? previous?.execution ?? executionFields.parse({});
+  const execution = fields.execution ?? previous?.execution ?? executionFields.parse({verificationRequired: true,
+    ...(fields.kind === "bug" ? {bug: bugFields.parse({})} : {brief: briefFields.parse({})})});
+  // Clients cannot erase an adopted brief by omitting it from a replacement plan.
+  execution.brief ??= previous?.execution?.brief;
+  execution.bug ??= previous?.execution?.bug;
+  if (!previous || previous.kind !== fields.kind) {
+    if (fields.kind === "bug") execution.bug ??= bugFields.parse({});
+    else execution.brief ??= briefFields.parse({});
+  }
+  const missing = qualityIssues({...fields, execution});
+  if (missing.length) throw new RequestError("Before moving to " + fields.status + ", complete: " + missing.join(", ") + ".");
   const approved = execution.approved && (!!execution.approach && !!fields.criteria);
   const closed = ["Done", "Closed"];
   const verified = (plan: typeof execution | null) => !plan?.verificationRequired ||
     (plan.result === "Passed" && !!plan.testPlan && !!plan.evidence);
   const prerequisites = new Map(all.map((card) => [card.id, card]));
+  for (const related of [execution.parentId, execution.bug?.duplicateOf]) {
+    if (related && (related === cardId || !prerequisites.has(related))) throw new RequestError("Choose a related card from this product, other than itself.");
+  }
+  for (const relation of ["parentId", "duplicateOf"] as const) {
+    const seen = new Set<string>(cardId ? [cardId] : []);
+    let next = relation === "parentId" ? execution.parentId : execution.bug?.duplicateOf;
+    while (next) {
+      if (seen.has(next)) throw new RequestError("Related cards cannot form a cycle.");
+      seen.add(next);
+      const related = prerequisites.get(next);
+      next = relation === "parentId" ? related?.execution?.parentId : related?.execution?.bug?.duplicateOf;
+    }
+  }
   const visited = new Set<string>();
   const pending = [...execution.blockers];
   while (pending.length) {
@@ -47,7 +71,7 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     if (execution.planningRequired && !approved) throw new RequestError("Review the plan and acceptance criteria before advancing.");
     for (const id of execution.blockers) {
       const blocker = prerequisites.get(id)!;
-      if (!closed.includes(blocker.status) || !verified(blocker.execution)) {
+      if (!closed.includes(blocker.status) || !verified(blocker.execution) || qualityIssues(blocker).length) {
         throw new RequestError("Waiting for " + blocker.title + " to close with any required verification.");
       }
     }

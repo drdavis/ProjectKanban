@@ -21,7 +21,7 @@ Use your actual domain; `YOUR_PERMANENT_DOMAIN` is a placeholder. Do not append 
 ### 2. Create the right token
 
 1. Enter a label such as `Codex on my laptop`.
-2. Select **Allow this token to create and move cards** if you want the tool to update your board. Otherwise leave it unchecked for read-only access.
+2. Select **Allow this token to create, edit and move cards** if you want the tool to update your board. Otherwise leave it unchecked for read-only access.
 3. Click **Create token**.
 4. Keep the panel open while configuring your client. The full token is shown only when issued.
 
@@ -53,7 +53,7 @@ Ask your coding tool:
 
 Success is a response containing actual card results from `list_cards` and `get_card`, not just a statement that the server exists. An empty card list is also a valid response for an empty board.
 
-A write-enabled token additionally exposes `create_card` and `move_card`. To test writes intentionally, ask the tool to create a clearly labeled connection-test card with acceptance criteria, move it to Ready, and read it back. Verify it appears on the selected product's board. This creates a real card; do not run it merely to test read access.
+A write-enabled token additionally exposes `create_card`, `update_card`, and `move_card`. Select the separate roadmap permission when issuing a token to expose `update_roadmap`; existing tokens do not gain roadmap access. To test writes intentionally, ask the tool to create a clearly labeled connection-test card with acceptance criteria, move it to Ready, and read it back. Verify it appears on the selected product's board. This creates a real card; do not run it merely to test read access.
 
 **Opening `/api/mcp` in a browser is not a test.** Browser navigation sends GET; this endpoint accepts MCP POST requests and returns 405 to GET.
 
@@ -101,6 +101,10 @@ bearer_token_env_var = "PROJECTKANBAN_MCP_TOKEN"
 Set that variable to the **token alone** in the process that launches Codex. Do not use both examples for the same connection. Do not run `codex mcp login` for this product-token setup; that command starts the separate OAuth flow.
 
 Codex reference: [MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
+## Agent workflow and structured cards
+
+See [Agent-guided planning and execution](agent-workflow.md) for opt-in installation, lifecycle rules, structured development/bug fields, revision checks and retry-safe writes. The MCP access panel includes a copyable workflow pack. Call `get_workflow` and `get_product` at session start.
 
 ## Available tools and limits
 
