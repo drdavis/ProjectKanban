@@ -2,7 +2,46 @@ import { z } from "zod";
 import { briefFields, bugFields, executionFields } from "./card-quality.ts";
 import { releaseFields } from "./roadmap.ts";
 const revision = z.number().int().nonnegative();
-const executionPatch = executionFields.partial().extend({brief: briefFields.partial().optional(), bug: bugFields.partial().optional()}).strict();
+// Partial updates must not apply creation defaults to omitted fields.
+const briefPatch = z.object({
+  audience: briefFields.shape.audience.removeDefault().optional(),
+  problem: briefFields.shape.problem.removeDefault().optional(),
+  outcome: briefFields.shape.outcome.removeDefault().optional(),
+  scope: briefFields.shape.scope.removeDefault().optional(),
+  exclusions: briefFields.shape.exclusions.removeDefault().optional(),
+  decisions: briefFields.shape.decisions.removeDefault().optional(),
+}).strict();
+const bugPatch = z.object({
+  reporter: bugFields.shape.reporter.removeDefault().optional(),
+  discoveredAt: bugFields.shape.discoveredAt.removeDefault().optional(),
+  affectedVersion: bugFields.shape.affectedVersion.removeDefault().optional(),
+  environment: bugFields.shape.environment.removeDefault().optional(),
+  preconditions: bugFields.shape.preconditions.removeDefault().optional(),
+  steps: bugFields.shape.steps.removeDefault().optional(),
+  expected: bugFields.shape.expected.removeDefault().optional(),
+  actual: bugFields.shape.actual.removeDefault().optional(),
+  frequency: bugFields.shape.frequency.removeDefault().optional(),
+  impact: bugFields.shape.impact.removeDefault().optional(),
+  reproduction: bugFields.shape.reproduction.removeDefault().optional(),
+  investigation: bugFields.shape.investigation.removeDefault().optional(),
+  rootCause: bugFields.shape.rootCause.removeDefault().optional(),
+  fixSummary: bugFields.shape.fixSummary.removeDefault().optional(),
+  regressionTest: bugFields.shape.regressionTest.removeDefault().optional(),
+  fixedIn: bugFields.shape.fixedIn.removeDefault().optional(),
+  duplicateOf: bugFields.shape.duplicateOf.removeDefault().optional(),
+}).strict();
+const executionPatch = z.object({
+  planningRequired: executionFields.shape.planningRequired.removeDefault().optional(),
+  approach: executionFields.shape.approach.removeDefault().optional(),
+  approved: executionFields.shape.approved.removeDefault().optional(),
+  blockers: executionFields.shape.blockers.removeDefault().optional(),
+  verificationRequired: executionFields.shape.verificationRequired.removeDefault().optional(),
+  testPlan: executionFields.shape.testPlan.removeDefault().optional(),
+  result: executionFields.shape.result.removeDefault().optional(),
+  evidence: executionFields.shape.evidence.removeDefault().optional(),
+  parentId: executionFields.shape.parentId,
+  brief: briefPatch.optional(), bug: bugPatch.optional(),
+}).strict();
 const assignment = z.object({releaseId:z.uuid(),phase:z.string().trim().min(1).max(100).optional(),milestone:z.string().trim().min(1).max(100).optional()}).strict();
 export const patchFields = z.object({
   title: z.string().trim().min(1).max(180).optional(), description:z.string().max(10000).optional(),

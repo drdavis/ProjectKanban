@@ -81,3 +81,23 @@ test("MCP roadmap tools are independently scoped and expose workflow guidance",a
   assert.match((await call("get_workflow",{})).result.content[0].text,/does not run in the background/);
   assert.equal((await call("get_product",{})).result.content[0].text.includes('"revision":3'),true);
 });
+
+
+test("parsed MCP patches preserve omitted plans, approvals, blockers and nested details",()=>{
+  const before=bug().execution;
+  before.planningRequired=true;before.approved=true;before.approach="Reviewed investigation";
+  before.blockers=[crypto.randomUUID()];before.evidence="Existing evidence";
+  const parsed=updateArgs.parse({cardId:crypto.randomUUID(),expectedRevision:13,fields:{execution:{evidence:"New observed evidence",bug:{impact:"Updated impact"}}}});
+  assert.deepEqual(Object.keys(parsed.fields.execution).sort(),["bug","evidence"]);
+  assert.deepEqual(parsed.fields.execution.bug,{impact:"Updated impact"});
+  const after=mergeExecution(before,parsed.fields.execution);
+  assert.equal(after.testPlan,before.testPlan);
+  assert.equal(after.approved,true);assert.equal(after.approach,before.approach);
+  assert.deepEqual(after.blockers,before.blockers);
+  assert.equal(after.bug.steps,before.bug.steps);
+  assert.equal(after.bug.reproduction,"Confirmed");
+  assert.equal(after.evidence,"New observed evidence");
+  const brief=updateArgs.parse({cardId:crypto.randomUUID(),expectedRevision:13,fields:{execution:{brief:{scope:"Changed scope"}}}});
+  assert.deepEqual(brief.fields.execution,{brief:{scope:"Changed scope"}});
+  assert.doesNotThrow(()=>JSON.stringify(createArgs));
+});
