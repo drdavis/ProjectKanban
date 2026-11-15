@@ -68,3 +68,12 @@ export function mergeExecution(current: Execution | null | undefined, patch: Rec
     ...(patch.bug ? {bug: {...before.bug, ...(patch.bug as object)}} : {}),
   });
 }
+
+// Reopening invalidates the current verification; the activity log retains prior evidence.
+export function executionAfterTransition(execution: Execution, previousStatus: string | undefined, nextStatus: string): Execution {
+  const completed = (status: string | undefined) => status === "Done" || status === "Closed";
+  if (!completed(previousStatus) || completed(nextStatus)) return execution;
+  return {...execution, result: "Pending", evidence: "",
+    ...(execution.bug ? {bug: {...execution.bug, regressionTest: "", fixedIn: ""}} : {}),
+  };
+}

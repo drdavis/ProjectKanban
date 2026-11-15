@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { executionFields, briefFields, bugFields, qualityIssues, mergeExecution } from "../lib/card-quality.ts";
+import { executionFields, briefFields, bugFields, qualityIssues, mergeExecution, executionAfterTransition } from "../lib/card-quality.ts";
 import { updateArgs, createArgs, roadmapArgs } from "../lib/mcp-inputs.ts";
 import { handleMcpRequest } from "../lib/mcp-protocol.ts";
 
@@ -100,4 +100,18 @@ test("parsed MCP patches preserve omitted plans, approvals, blockers and nested 
   const brief=updateArgs.parse({cardId:crypto.randomUUID(),expectedRevision:13,fields:{execution:{brief:{scope:"Changed scope"}}}});
   assert.deepEqual(brief.fields.execution,{brief:{scope:"Changed scope"}});
   assert.doesNotThrow(()=>JSON.stringify(createArgs));
+});
+
+
+test("reopening completed work invalidates verification without mutating historical evidence",()=>{
+  const previous=executionFields.parse({result:"Passed",evidence:"Prior run output",testPlan:"Retest steps",bug:{rootCause:"Prior finding",fixSummary:"Prior fix",regressionTest:"Prior regression result",fixedIn:"1.0"}});
+  for(const [from,to] of [["Closed","Fixing"],["Closed","Triage"],["Done","Ready"]]){
+    const reopened=executionAfterTransition(previous,from,to);
+    assert.equal(reopened.result,"Pending");assert.equal(reopened.evidence,"");
+    assert.equal(reopened.bug.regressionTest,"");assert.equal(reopened.bug.fixedIn,"");
+    assert.equal(reopened.testPlan,"Retest steps");assert.equal(reopened.bug.rootCause,"Prior finding");
+  }
+  assert.equal(previous.evidence,"Prior run output");assert.equal(previous.bug.fixedIn,"1.0");
+  assert.equal(executionAfterTransition(previous,"Fixing","Verify"),previous);
+  assert.equal(executionAfterTransition(previous,"Closed","Closed"),previous);
 });

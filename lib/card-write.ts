@@ -6,7 +6,7 @@ import type { database } from "./db";
 import { activity, cards, products } from "./schema";
 import { cardFields, executionFields, workflows } from "./workflow";
 import { assignmentIsValid } from "./roadmap";
-import { qualityIssues, briefFields, bugFields } from "./card-quality";
+import { qualityIssues, briefFields, bugFields, executionAfterTransition } from "./card-quality";
 
 type Transaction = Parameters<Parameters<ReturnType<typeof database>["transaction"]>[0]>[0];
 
@@ -29,8 +29,8 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     const [product] = await tx.select({releases: products.releases}).from(products).where(eq(products.id, productId));
     if (!product || !assignmentIsValid(assignment, product.releases)) throw new RequestError("Choose a release, phase, and milestone from this product.");
   }
-  const execution = fields.execution ?? previous?.execution ?? executionFields.parse({verificationRequired: true,
-    ...(fields.kind === "bug" ? {bug: bugFields.parse({})} : {brief: briefFields.parse({})})});
+  const execution = executionAfterTransition(executionFields.parse(fields.execution ?? previous?.execution ?? {verificationRequired: true,
+    ...(fields.kind === "bug" ? {bug: bugFields.parse({})} : {brief: briefFields.parse({})})}), previous?.status, fields.status);
   // Clients cannot erase an adopted brief by omitting it from a replacement plan.
   execution.brief ??= previous?.execution?.brief;
   execution.bug ??= previous?.execution?.bug;
