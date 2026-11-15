@@ -355,14 +355,14 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <label>Blocked by<select name="blockers" multiple defaultValue={card?.execution?.blockers ?? []}>
             {snapshot?.cards.filter((item) => item.id !== card?.id).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
           </select></label>
-          <label className="checkbox"><input name="verificationRequired" type="checkbox" defaultChecked={card?.execution?.verificationRequired ?? true}/> Require passing verification before closing</label>
+          <label className="checkbox"><input name="verificationRequired" type="checkbox" defaultChecked={card?.execution?.verificationRequired ?? true}/> Show testing indicator (passing evidence is always required to close)</label>
           <label>Test plan<textarea name="testPlan" defaultValue={card?.execution?.testPlan}/></label>
           <label>Test result<select name="result" defaultValue={card?.execution?.result ?? "Pending"}><option>Pending</option><option>Passed</option><option>Failed</option></select></label>
           <label>Evidence<textarea name="evidence" defaultValue={card?.execution?.evidence}/></label>
         </details>
         <label>GitHub issue or pull request URL<input name="link" type="url" defaultValue={card?.link}/></label>
         {card?.link && <a href={card.link} target="_blank" rel="noreferrer">Open linked work</a>}
-        {!preview && <CardAttachments productId={product.id} cardId={card?.id} canEdit={canEdit}/>}
+        {!preview && <CardAttachments key={card?.id ?? "new"} productId={product.id} cardId={card?.id} canEdit={canEdit}/>}
         <Button type="submit" disabled={busy || !canEdit}>Save card</Button>
       </form>}
       {panel === "card" && card && product && isOwner && snapshot?.policy?.allowOwnerExceptions && !preview && <details><summary>Owner readiness exception</summary><form onSubmit={event=>{const values=form(event);save({action:"card.exception",productId:product.id,revision:product.revision,cardId:card.id,status:String(values.get("destination")),reason:String(values.get("reason"))});}}>

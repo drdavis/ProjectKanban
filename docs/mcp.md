@@ -109,7 +109,10 @@ See [Agent-guided planning and execution](agent-workflow.md) for opt-in installa
 ## Available tools and limits
 
 - `list_cards`: optional board/status filters, limit and offset pagination.
-- `get_card`: card details, acceptance criteria, execution/test plan and linked work.
+- `get_card`: card details, acceptance criteria, execution/test plan, attachment metadata and linked work.
+- `get_product` / `get_workflow`: scoped roadmap, current revision, quality policy and agent guidance.
+- `update_card` (write token): partial field and execution updates using the latest product revision.
+- `update_roadmap` (roadmap-enabled token): reviewed, versioned roadmap/release changes with conflict and retry protection.
 - `create_card` (write token): creates in Backlog for development or Reported for bugs.
 - `move_card` (write token): moves within the card's board using the same workflow validation as the app.
 

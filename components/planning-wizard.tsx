@@ -214,7 +214,7 @@ export function PlanningWizard({ownerId, productId, productName, roadmap, revisi
           <p style={{whiteSpace:"pre-wrap"}}>{card.criteria}</p>
         </li>)}</ol>
       </>}
-      {error && <p role="alert" className="error">{error}</p>}
+      {error && <><p role="alert" className="error">{error}</p>{draft.pending && <><p>If a response was lost, retry first to check whether publishing succeeded. Edit only when the plan needs correction.</p><Button variant="outline" disabled={busy} onClick={()=>update({pending:undefined,step:0})}>Review and correct draft</Button></>}</>}
       <div className="actions">
         {step > 0 && <Button variant="outline" disabled={busy || Boolean(draft.pending)} onClick={() => update({step: step - 1})}>Back</Button>}
         <Button type="submit" disabled={busy || (step === 3 && !draft.pending && draft.baseRoadmap !== roadmap)}>
