@@ -1,3 +1,4 @@
+import { plannerExecutionIsSafe } from "../../../lib/planner-safety";
 import { createHash } from "node:crypto";
 import { readQualityPolicy } from "../../../lib/quality-policy-store";
 import { RequestError, saveCard } from "../../../lib/card-write";
@@ -133,6 +134,8 @@ export async function POST(request: Request) {
       });
       const ids = new Set(snapshot.issues.map((card) => card.id));
       for (const operation of output.operations) {
+        const previous=snapshot.issues.find(card=>card.id===operation.cardId);
+        if(!plannerExecutionIsSafe(operation.execution,previous?.execution))throw new RequestError("AI proposed unverified evidence or approval. Generate a planning-only proposal.",422);
         if (["Done", "Closed"].includes(operation.status) || !workflows[operation.kind].includes(operation.status) ||
           (operation.type === "create" ? operation.cardId !== null : !operation.cardId || !ids.has(operation.cardId)) ||
           (operation.beforeId && (!ids.has(operation.beforeId) || operation.beforeId === operation.cardId))) {
@@ -239,6 +242,7 @@ export async function POST(request: Request) {
           if (operation.cardId) {
             [previous] = await tx.select().from(cards).where(and(eq(cards.id, operation.cardId), eq(cards.productId, product.id)));
           }
+          if(!plannerExecutionIsSafe(operation.execution,previous?.execution))throw new RequestError("This proposal contains unverified evidence or approval. Generate a new proposal.",422);
           const fields = operation.type === "move" && previous
             ? {...previous, execution: previous.execution ?? undefined, kind: operation.kind, status: operation.status}
             : {...operation, execution: operation.execution ?? previous?.execution ?? undefined, link: previous?.link ?? ""};

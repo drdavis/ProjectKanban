@@ -43,3 +43,16 @@ test('published plans retain release assignments and test plans with legacy draf
   const legacy=publishedPlan.parse({requestId:id,roadmap:'Older draft',cards:[{title:'Old',description:'Old context',criteria:'Old criteria'}]});
   assert.equal(legacy.cards[0].testPlan,'');
 });
+
+import {plannerExecutionIsSafe} from '../lib/planner-safety.ts';
+test('AI proposals cannot invent approvals, passing tests or bug resolution facts',()=>{
+  const pending=executionFields.parse({approach:'Investigate'});
+  assert.equal(plannerExecutionIsSafe(pending),true);
+  assert.equal(plannerExecutionIsSafe({...pending,result:'Passed'}),false);
+  assert.equal(plannerExecutionIsSafe({...pending,evidence:'Imaginary test output'}),false);
+  assert.equal(plannerExecutionIsSafe({...pending,approved:true}),false);
+  const verified=executionFields.parse({result:'Passed',evidence:'Recorded actual result',approved:true,approach:'Reviewed plan'});
+  assert.equal(plannerExecutionIsSafe(verified,verified),true);
+  assert.equal(plannerExecutionIsSafe({...verified,approach:'Different plan'},verified),false);
+  assert.equal(plannerExecutionIsSafe(executionFields.parse({bug:{fixSummary:'Pretend fix'}})),false);
+});

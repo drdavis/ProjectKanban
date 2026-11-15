@@ -411,6 +411,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
                 ["Severity", previous?.severity, operation.severity],
               ] as const).filter(([, before, after]) => before !== after && (before || after)).map(([label, before, after]) =>
                 <div key={label}><dt>{label}</dt><dd>{before && <del>{before}</del>}<span>{after || "Cleared"}</span></dd></div>)}</dl>}
+              {operation.execution && <details><summary>Planning and testing changes</summary><p>Current</p><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(previous?.execution??{},null,2)}</pre><p>Proposed</p><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(operation.execution,null,2)}</pre></details>}
               <p>{operation.reason}</p>
             </div>;
           })}
@@ -437,6 +438,8 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           const before = item.before as Partial<Card> | null;
           const after = item.after as Partial<Card> | null;
           return <article key={item.id}><strong>{item.action}{after?.title && " · " + after.title}</strong>
+            {item.action === "Granted quality exception" && <><p>{(item.after as {reason:string}).reason}</p><p>Waived for this transition: {(item.after as {waived:string[]}).waived.join(", ")}</p></>}
+            {item.action === "Changed quality policy" && <pre style={{whiteSpace:"pre-wrap"}}>{JSON.stringify(item.after,null,2)}</pre>}
             {before?.status && after?.status && before.status !== after.status && <p>{before.status} → {after.status}</p>}
             <p>{item.actor.startsWith("AI · ") ? "AI proposal" : "Manual"} · {new Date(item.createdAt).toLocaleString()}</p></article>;
         })}
