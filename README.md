@@ -10,7 +10,7 @@ Open a product’s **MCP access** panel for step-by-step setup with copy buttons
 
 ## Run locally
 
-1. Install dependencies with `npm install` using Node.js 24.
+1. Install dependencies with `npm ci` using Node.js 24.
 2. Copy `.env.example` to `.env.local`. Create a Neon PostgreSQL database and enable Neon Auth with Better Auth on its branch. Set NEON_AUTH_BASE_URL to the branch auth endpoint and generate NEON_AUTH_COOKIE_SECRET with openssl rand -base64 32. Use the pooled URL for `DATABASE_URL` and the direct URL for `DATABASE_URL_UNPOOLED`. Configure an AI provider if you want to use the planner. For internal use, restrict account registration through Neon Auth.
 3. Apply the database schema with `node --env-file=.env.local node_modules/drizzle-kit/bin.cjs migrate`.
 4. Set `AUTH_ALLOWED_EMAILS` to the first owner's email and verify that email in Neon Auth. Existing product owners and explicitly assigned product members retain application access. Public signup and social sign-in routes are blocked; a provider account alone does not grant workspace access. Keep signup disabled in Neon Auth too.
@@ -78,3 +78,9 @@ Save a card, then use **Attachments** to paste screenshots, drop files or choose
 Run `npm test` for local checks. For end-to-end MCP checks, use a dedicated test product and set `PROJECTKANBAN_MCP_URL`, `PROJECTKANBAN_MCP_TOKEN` and `PROJECTKANBAN_TEST_PRODUCT_ID`, then run `npm run test:mcp`. This creates one audit-visible test card, verifies retries/conflicts/gates, and closes that test card only after the checks pass. Never commit tokens.
 
 Source code is available under the MIT license. Deployments, user data and credentials are not part of the source license.
+
+## Release verification
+
+See [the recorded acceptance results](docs/release-verification.md) for executed checks and remaining sign-in/browser checks. `npm run test:http` runs public HTTP access-boundary checks against production, or against `PROJECTKANBAN_BASE_URL`.
+
+The lockfile fixes the tested dependency graph. Security overrides keep Neon Auth’s pinned Better Auth and Zod dependencies on patched versions. Review these overrides when upgrading Neon Auth; do not remove them without rerunning the audit and authentication checks.
