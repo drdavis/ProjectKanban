@@ -34,3 +34,10 @@ The resulting audit reports **0 critical, 0 high, 0 moderate and 7 low dependenc
 - Public repository visibility was not changed by this test run.
 
 The browser-control runtime was unavailable. None of these unexecuted checks are marked Passed, and affected roadmap cards remain Review/Pending. No Neon connector calls were made.
+
+
+## Central deployment documentation — November 21, 2026
+
+Added a public self-hosting and multi-computer MCP setup guide. The existing production deployment passed all 16 public HTTP checks again. Reviewed all 11 existing Git commits and all fetched branches with Gitleaks: no secrets detected. Reviewed tracked paths and history for environment files, private contact information and database dumps; no such data was identified. GitHub reported no issues, pull requests or releases to inspect. This review is not a guarantee that scanners can identify every form of sensitive data.
+
+The November 17 Chrome run verified signed-in reload, saved-view restoration, manual guided plan recovery/publication, card movement/sorting persistence, roadmap comparisons and TXT/PNG attachment persistence. The download matched its source byte-for-byte. A limited mobile/keyboard check passed. Follow-ups remain for product selection after reload and structured briefs in published plans. AI-provider configuration, separate-account permissions and remaining edge cases are still pending; the project is not represented as fully release-certified.

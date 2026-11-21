@@ -57,6 +57,10 @@ A write-enabled token additionally exposes `create_card`, `update_card`, and `mo
 
 **Opening `/api/mcp` in a browser is not a test.** Browser navigation sends GET; this endpoint accepts MCP POST requests and returns 405 to GET.
 
+## Multiple computers and AI accounts
+
+Use one central deployment with a separately labeled token per client installation. Codex and Claude account identities do not have to match. For exact Claude Code setup, deployment instructions, costs and coordination guidance, see [Central deployment](central-deployment.md). Tokens expire after 30 days. Browser-local drafts and saved views do not synchronize across computers.
+
 ## More than one product
 
 Create a separate token from each product's **MCP access** panel. Add one connection per product, with distinct names and the same server URL. Each connection uses its own token. A Magic Diagram token cannot read ProjectKanban's own development board. Tokens do not grant access to other products or the database.

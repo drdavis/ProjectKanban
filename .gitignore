@@ -4,3 +4,10 @@ node_modules/
 !.env.example
 *.tsbuildinfo
 .vercel/
+
+# Local assistant credentials and production exports
+.mcp.json
+.codex/
+.claude/
+*.dump
+*.sql.gz
