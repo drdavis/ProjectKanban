@@ -1,6 +1,53 @@
 # ProjectKanban
 
-ProjectKanban tracks multiple products in a searchable catalog. Each product has a roadmap, a Development board, a Bug Fixes board, an activity log, and its own AI planning context. The app includes optional fictional sample products with a roadmap, a development card, and a bug card. Each product has a timestamped roadmap history that records changes when you save the roadmap.
+**One shared development plan for you and your AI coding tools.**
+
+ProjectKanban is an open-source workspace for people building products with Codex, Claude Code, and other MCP-compatible tools. Keep roadmaps, development tasks, bugs, and verification evidence in one place—across chats, accounts, and computers.
+
+![ProjectKanban's own development board, with phase colors and work moving through In Progress, Review, and Done](docs/images/projectkanban-board.jpg)
+
+*Real development work in ProjectKanban, captured November 21, 2026.*
+
+## The problem it solves
+
+You plan a feature in one chat, build it in another, and find a bug on a different computer. Soon, the current plan is scattered across conversations. You have to reconstruct what was agreed, tell the next tool where to start, and work out whether “done” means implemented or actually tested.
+
+ProjectKanban gives that work a persistent home. You and your connected coding tools can read the same product roadmap, update the same cards, and record what happened. The next session can pick up from the saved work instead of relying on a copied conversation summary.
+
+It is built for solo builders and small teams managing several products, especially when work moves between AI coding tools.
+
+## What you can do
+
+- **Keep each product organized.** Give every product its own roadmap, Development board, Bug Fixes board, and activity history.
+- **Turn ideas into clear work.** Record the problem, intended outcome, scope, acceptance criteria, and implementation plan on a card.
+- **Connect your coding tools.** Use MCP—the connection that lets an AI tool read and update the board—to work from different accounts and computers.
+- **Make handoffs explicit.** Track owners, dependencies, phases, milestones, and releases so the next session can see what comes next.
+- **Separate implementation from verification.** Keep test plans and evidence alongside the work, with readiness and completion checks.
+- **Keep supporting context close.** Attach screenshots and documents, link GitHub issues or pull requests, and review roadmap changes over time.
+
+## A practical handoff
+
+1. Define a feature and its acceptance criteria in ProjectKanban.
+2. Ask Codex to read the card, implement the agreed work, and update its status and evidence.
+3. On another computer, ask Claude Code to read that card and continue the review or testing.
+4. Record any bug on the same product's Bug Fixes board. Close the work when its verification requirements are satisfied.
+
+Each tool needs its own configured access. The shared record is the saved roadmap and cards; chat transcripts and local code changes are not automatically synchronized. Git remains the home for source code. ProjectKanban does not start or supervise background coding agents.
+
+## See it in use
+
+![Magic Diagram development board showing an active product's backlog, implementation work, and review queue](docs/images/magic-diagram-board.jpg)
+
+*Magic Diagram is another real product tracked in the same installation. These screenshots show work in progress, including items still awaiting review and verification.*
+
+## Start here
+
+- **Host it for your tools:** [Central deployment and multi-computer setup](docs/central-deployment.md).
+- **Connect Codex or Claude Code:** [MCP setup and troubleshooting](docs/mcp.md).
+- **Define how agents should work:** [Planning, handoffs, and verification](docs/agent-workflow.md).
+- **Share the project:** [Public introduction, launch copy, and image captions](docs/launch-copy.md).
+
+ProjectKanban is under active development. Check the [recorded verification results and remaining checks](docs/release-verification.md) before adopting it for your workflow. The in-app AI planner is optional and requires provider configuration; external coding tools can use MCP independently of that planner.
 
 ## Run one shared installation
 
