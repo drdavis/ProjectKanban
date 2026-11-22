@@ -70,6 +70,7 @@ export function ProviderSettings() {
 
   const connection = available?.connection;
   return <div className="history">
+    <p>Use your own OpenRouter, OpenAI, Anthropic, or Vercel AI Gateway API key. These are provider API keys, separate from ProjectKanban MCP tokens.</p>
     <p>{connection
       ? `${providerLabels[connection.provider]} · ${connection.model} · ${connection.source === "personal" ? "Personal key" : "Server key"}`
       : available ? "No provider is configured." : error ? "" : "Loading provider settings…"}</p>
@@ -89,7 +90,7 @@ export function ProviderSettings() {
       {connection?.source === "personal" && connection.provider === provider && <p className="muted">Leave the key blank to keep the saved key.</p>}
       <Button type="submit" disabled={busy}>Save connection</Button>
     </form>}
-    {available && !available.personalConnectionsAvailable && <p className="muted">Configure server-side credential encryption to save a personal API key.</p>}
+    {available && !available.personalConnectionsAvailable && <p className="muted">Saving API keys is not enabled on this installation yet. The administrator must configure credential encryption before you can add a provider.</p>}
     <p className="muted">A connection test sends a short test prompt. Planning sends the context you select to the active provider. Usage is billed to the key’s account.</p>
     {error && <p className="error" role="alert">{error}</p>}
     {note && <p role="status">{note}</p>}

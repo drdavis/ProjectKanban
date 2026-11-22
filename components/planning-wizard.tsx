@@ -164,6 +164,7 @@ export function PlanningWizard({ownerId, productId, productName, roadmap, revisi
 
   const {step, mode, cards} = draft;
   return <section aria-label="Guided planning for this product">
+    <p>Turn an idea into a reviewed roadmap and development cards. Define the outcome, organize phases and milestones, write cards and test plans, then review and publish. You can complete this without AI.</p>
     <p className="muted">Step {step + 1} of {stages.length} · {productName}</p>
     <h3>{stages[step][0]}</h3>
     <p>{stages[step][1]}</p>

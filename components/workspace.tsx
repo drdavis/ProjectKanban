@@ -199,7 +199,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         <button key={item.id} disabled={busy} aria-current={item.id === selected ? "page" : undefined} onClick={() => {
           setSelected(item.id); setFilter(""); setPhase(""); setTag(""); setResponsible(""); setError("");
         }}><span className="product-icon">{item.name.slice(0, 2).toUpperCase()}</span>{item.name}</button>)}</nav>
-      <div className="sidebar-bottom"><Button variant="ghost" disabled={busy || !!preview} onClick={() => setPanel("import")}><GitBranch size={16}/> Add sample products</Button>{!preview && <Button variant="ghost" onClick={() => setPanel("provider")}>AI Provider</Button>}{account}</div>
+      <div className="sidebar-bottom">{!preview && <p className="muted">Signed in · Private workspace</p>}<Button variant="ghost" disabled={busy || !!preview} onClick={() => setPanel("import")}><GitBranch size={16}/> Add sample products</Button>{!preview && <Button variant="ghost" onClick={() => setPanel("provider")}>AI Provider</Button>}{account}</div>
     </aside>
     <main className="main">
       {preview && <div className="preview-note">Read-only preview · Fictional product <a href="/">Back to sign-in</a></div>}
@@ -211,7 +211,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         </header>
         <div className="workspace-commands" aria-label="Product actions">
             <Button variant="ghost" disabled={busy || !!preview} aria-label="Refresh board" onClick={() => void run(async () => setSnapshot(await request<Snapshot>(selected)))}><RefreshCw size={16}/></Button>
-            <Button variant="outline" onClick={() => setPanel("settings")}>Roadmap</Button>
+            <Button variant="outline" onClick={() => setPanel("settings")}>Configure</Button>
             {!preview && <Button variant="outline" onClick={() => setPanel("portfolio")}>Portfolio</Button>}
             <Button variant="outline" onClick={() => setPanel("history")}>Activity</Button>
             {canEdit && <Button variant="outline" onClick={() => setPanel("planning")}>Plan product</Button>}
@@ -262,7 +262,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <Button variant="outline" onClick={() => setPanel("import")}>Add sample products</Button>
         </div></>}</div>}
     </main>
-    {panel && <Sheet key={panel} title={{product: "New product", settings: "Product roadmap", import: "Add sample products", card: card ? "Edit card" : "New card", ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Product access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
+    {panel && <Sheet key={panel} title={{product: "New product", settings: "Configure product", import: "Add sample products", card: card ? "Edit card" : "New card", ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Product access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
       {error && <p className="error" role="alert">{error}</p>}
       {(panel === "product" || (panel === "settings" && isOwner)) && <form onSubmit={(event) => {
         const values = form(event);
@@ -272,10 +272,12 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         <label>Product name<input name="name" required maxLength={100} defaultValue={panel === "settings" ? product?.name : ""}/></label>
         <label>Roadmap<textarea name="roadmap" rows={9} maxLength={12000} defaultValue={panel === "settings" ? product?.roadmap : ""}/></label>
         <label>Primary repository URL<input name="repository" type="url" defaultValue={panel === "settings" ? product?.repository : ""}/></label>
-        <label className="checkbox"><input name="aiEnabled" type="checkbox" defaultChecked={panel === "settings" && product?.aiEnabled}/> Enable external AI planning for this product</label>
+        <label className="checkbox"><input name="aiEnabled" type="checkbox" defaultChecked={panel === "settings" && product?.aiEnabled}/> Allow the in-app planner to send selected context to an AI provider</label>
+        <p className="muted">Nothing is sent when you save this setting. AI proposals require a configured provider and an explicit request. Codex and Claude MCP access is configured separately.</p>
         <Button type="submit" disabled={busy || !!preview}>Save product</Button>
       </form>}
       {panel === "settings" && product && <section className="history">
+        {!preview && <div><h3>AI provider</h3><p>Choose OpenRouter, OpenAI, Anthropic, or Vercel AI Gateway and save your own API key. Your provider connection applies to your account; external AI planning is enabled separately for each product.</p><Button variant="outline" onClick={() => setPanel("provider")}>Configure AI provider</Button></div>}
         {!isOwner && <><h3>Current roadmap</h3><p style={{whiteSpace: "pre-wrap"}}>{product.roadmap || "No roadmap yet."}</p></>}
         <h3>Releases</h3>
         {product.releases.map((release) => <article key={release.id}><strong>{release.name}</strong>
@@ -380,6 +382,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <p className="muted">{plannerConnection
             ? "Destination: " + providerLabels[plannerConnection.provider] + " · " + plannerConnection.model + " · " + (plannerConnection.source === "personal" ? "Personal key" : "Server key")
             : plannerConnection === undefined ? "Checking the planner connection…" : "No AI connection is available. Open AI Provider settings to configure one."}</p>
+          <Button variant="outline" onClick={() => setPanel("provider")}>Configure AI provider</Button>
           <label>What should change?<textarea rows={5} required maxLength={5000} value={prompt} onChange={(event) => setPrompt(event.target.value)}/></label>
           <label className="checkbox"><input type="checkbox" checked={includeRoadmap} onChange={(event) => setIncludeRoadmap(event.target.checked)}/> Include current roadmap</label>
           <details><summary>Select cards ({cardIds.length})</summary>
@@ -393,7 +396,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
             <pre style={{whiteSpace: "pre-wrap", overflowWrap: "anywhere"}}>{JSON.stringify(plannerContext(prompt, product, includeRoadmap, snapshot!.cards.filter((item) => cardIds.includes(item.id))), null, 2)}</pre>
           </details>
           <Button type="submit" disabled={busy || !prompt.trim() || !plannerConnection}><Sparkles size={16}/>{busy ? "Working…" : "Send and generate proposal"}</Button>
-        </form> : <p>AI planning is off. Enable it in the product’s Roadmap settings.</p>}
+        </form> : <p>AI planning is off. Enable it in the product’s Configure settings.</p>}
         {selectedProposals.map((proposal) => <section className="proposal" key={proposal.id}>
           <h3>{proposal.prompt}</h3>
           {proposal.revision !== product.revision && <p className="muted">The board changed. Generate a fresh proposal to apply changes.</p>}

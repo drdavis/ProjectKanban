@@ -16,5 +16,5 @@ export default async function Page() {
   const {userId} = await auth();
   return userId
     ? <Workspace userId={userId} account={<NeonSignOut/>}/>
-    : <Welcome><p>Manage product roadmaps and bug fixes in one workspace.</p><NeonSignIn/></Welcome>;
+    : <Welcome><p>Private workspace. Sign in with an authorized account to access your products. Public registration is disabled.</p><NeonSignIn/></Welcome>;
 }
