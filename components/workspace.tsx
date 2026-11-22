@@ -1,5 +1,6 @@
 "use client";
 
+import { CsvImport } from "./csv-import";
 import { phaseTint } from "../lib/phase-colors";
 import { defaultQualityPolicy, type QualityPolicy } from "../lib/quality-policy";
 import { CardAttachments } from "./card-attachments";
@@ -40,7 +41,7 @@ export type Snapshot = {
   roadmapVersions: Array<typeof activity.$inferSelect>;
 };
 
-type Panel = "product" | "settings" | "import" | "card" | "ai" | "history" | "portfolio" | "planning" | "provider" | "members" | "mcp";
+type Panel = "csv" | "product" | "settings" | "import" | "card" | "ai" | "history" | "portfolio" | "planning" | "provider" | "members" | "mcp";
 const candidates = Object.keys(sampleProducts) as (keyof typeof sampleProducts)[];
 
 async function request<T>(productId?: string, command?: z.input<typeof mutation>, providerSelection?: string): Promise<T> {
@@ -262,7 +263,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <Button variant="outline" onClick={() => setPanel("import")}>Add sample products</Button>
         </div></>}</div>}
     </main>
-    {panel && <Sheet key={panel} title={{product: "New product", settings: "Configure product", import: "Add sample products", card: card ? "Edit card" : "New card", ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Product access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
+    {panel && <Sheet key={panel} title={{csv: "Import CSV", product: "New product", settings: "Configure product", import: "Add sample products", card: card ? "Edit card" : "New card", ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Product access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
       {error && <p className="error" role="alert">{error}</p>}
       {(panel === "product" || (panel === "settings" && isOwner)) && <form onSubmit={(event) => {
         const values = form(event);
@@ -276,7 +277,9 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         <p className="muted">Nothing is sent when you save this setting. AI proposals require a configured provider and an explicit request. Codex and Claude MCP access is configured separately.</p>
         <Button type="submit" disabled={busy || !!preview}>Save product</Button>
       </form>}
+      {panel === "csv" && product && isOwner && !preview && <CsvImport productId={product.id} revision={product.revision} onImported={async()=>setSnapshot(await request<Snapshot>(product.id))}/>}
       {panel === "settings" && product && <section className="history">
+        {isOwner && !preview && <div><h3>Import tasks</h3><p>Bring tasks from an Airtable CSV export, including historical completed work.</p><Button variant="outline" onClick={() => setPanel("csv")}>Import CSV</Button></div>}
         {!preview && <div><h3>AI provider</h3><p>Choose OpenRouter, OpenAI, Anthropic, or Vercel AI Gateway and save your own API key. Your provider connection applies to your account; external AI planning is enabled separately for each product.</p><Button variant="outline" onClick={() => setPanel("provider")}>Configure AI provider</Button></div>}
         {!isOwner && <><h3>Current roadmap</h3><p style={{whiteSpace: "pre-wrap"}}>{product.roadmap || "No roadmap yet."}</p></>}
         <h3>Releases</h3>

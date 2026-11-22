@@ -61,6 +61,10 @@ Open a product’s **MCP access** panel for step-by-step setup with copy buttons
 
 **[Complete MCP setup and troubleshooting guide](docs/mcp.md)** — Codex Desktop, exact header fields, multiple products, connection verification, and the separate optional OAuth setup.
 
+## Import existing tasks
+
+Use **Configure → Import CSV** to migrate an Airtable export. Preview the mapping, filter completed work, preserve historical Done records without inventing verification, and skip exact duplicate source rows. See the [CSV import guide](docs/csv-import.md).
+
 ## Run locally
 
 1. Install dependencies with `npm ci` using Node.js 24.
