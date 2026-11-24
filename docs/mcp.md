@@ -2,7 +2,7 @@
 
 ## Start here: product token setup
 
-Use **a product token with `/api/mcp`**. This is the standard setup for Codex and other clients that accept HTTP headers. No OAuth login or terminal command is required when your client lets you enter a custom header.
+Use **an explicitly scoped token with `/api/mcp/workspace`**. This is the standard setup for Codex and other clients that accept HTTP headers. No OAuth login or terminal command is required when your client lets you enter a custom header.
 
 **The token selects the product. The URL stays the same for every product in your installation.** A connection named after a different product still accesses the product that issued its token.
 
@@ -13,7 +13,7 @@ Sign in to your permanent ProjectKanban production site. Select the product in t
 Do not configure your coding tool from a localhost preview or a temporary deployment URL. Copy the server URL from the panel on your production site. It should have this shape:
 
 ```text
-https://YOUR_PERMANENT_DOMAIN/api/mcp
+https://YOUR_PERMANENT_DOMAIN/api/mcp/workspace
 ```
 
 Use your actual domain; `YOUR_PERMANENT_DOMAIN` is a placeholder. Do not append the product name. Remove any leading or trailing spaces or tabs.
@@ -25,7 +25,7 @@ Use your actual domain; `YOUR_PERMANENT_DOMAIN` is a placeholder. Do not append 
 3. Click **Create token**.
 4. Keep the panel open while configuring your client. The full token is shown only when issued.
 
-A token begins with `pk_mcp_`, lasts 30 days, and is scoped to this product. Store it in your coding tool's credential settings. Do not paste it into chat, screenshots, issues, or a repository. A token cannot be recovered from the token list; issue a replacement if you lose it. Revoke old tokens when no longer needed.
+A token begins with `pk_mcp_`, lasts 30 days, and is scoped to the products selected when issued. Store it in your coding tool's credential settings. Do not paste it into chat, screenshots, issues, or a repository. A token cannot be recovered from the token list; issue a replacement if you lose it. Revoke old tokens when no longer needed.
 
 ### 3. Configure Codex Desktop
 
@@ -35,7 +35,7 @@ Open **Settings → MCP servers** and add an HTTP server, or edit the existing c
 | --- | --- |
 | Name | A distinct recognizable name, such as `my-product-board` |
 | Transport | HTTP / Streamable HTTP |
-| URL | The URL copied in step 1, ending in `/api/mcp` |
+| URL | The URL copied in step 1, ending in `/api/mcp/workspace` |
 | Header name | `Authorization` |
 | Header value | `Bearer ` followed by your token; use **Copy header value** in ProjectKanban |
 
@@ -49,7 +49,7 @@ Save the connection, enable it, reconnect if offered, and start a new coding ses
 
 Ask your coding tool:
 
-> Use my product's MCP connection to list development cards, then read one card's details. Do not change any cards.
+> Call list_products, identify my intended product, then call get_workflow and get_product with that productId. Read one card without changing it.
 
 Success is a response containing actual card results from `list_cards` and `get_card`, not just a statement that the server exists. An empty card list is also a valid response for an empty board.
 
@@ -59,11 +59,11 @@ A write-enabled token additionally exposes `create_card`, `update_card`, and `mo
 
 ## Multiple computers and AI accounts
 
-Use one central deployment with a separately labeled token per client installation. Codex and Claude account identities do not have to match. For exact Claude Code setup, deployment instructions, costs and coordination guidance, see [Central deployment](central-deployment.md). Tokens expire after 30 days. Browser-local drafts and saved views do not synchronize across computers.
+Use one central deployment with a separately labeled token per client installation. Codex and Claude account identities do not have to match. For exact Claude Code setup, deployment instructions, costs and coordination guidance, see [Central deployment](central-deployment.md). Tokens expire after 30 days. Saved views synchronize through your account. Use Save/Load account draft for planning drafts; local autosave is a device safety copy.
 
 ## More than one product
 
-Create a separate token from each product's **MCP access** panel. Add one connection per product, with distinct names and the same server URL. Each connection uses its own token. A Magic Diagram token cannot read ProjectKanban's own development board. Tokens do not grant access to other products or the database.
+Select the products you own in **MCP access** when issuing a connection token. Use `/api/mcp/workspace`, call `list_products`, and pass an explicit `productId` to every scoped tool. Give each coding installation a distinct token label for audit and revocation. Existing tokens authorize only their original product unless a new scope was explicitly issued. `/api/mcp` remains a compatible single-product endpoint. Tokens never grant database access.
 
 ## Troubleshooting without starting over
 
@@ -72,7 +72,7 @@ Create a separate token from each product's **MCP access** panel. Add one connec
 | “Tools are not available in this session” | Confirm the connection exists and is enabled, inspect its connection error, then start a fresh session. This message alone does not establish server downtime. |
 | 401 Unauthorized | Use `/api/mcp`; check Authorization spelling, exactly one `Bearer` prefix, and token expiry/revocation. A Vercel login response is a separate deployment-protection issue. |
 | Token sent to `/api/mcp/magic-diagram` | Change only the URL to `/api/mcp`. Keep your valid product token. The longer route is the separate OAuth pilot. |
-| Wrong board | The credential selects the board. Issue a token from the intended product; renaming the MCP connection does not change scope. |
+| Wrong board | Call list_products and select the intended productId. Issue a token that includes that product; renaming a connection does not change scope. |
 | Read works, write tools absent | Issue a token with write access selected and replace the client credential. Existing read-only tokens do not become writers. |
 | Card move rejected | Read the card's plan, prerequisites, acceptance criteria and verification requirements. Workflow rejection is not a connection failure. |
 | 405 in a browser | Expected for GET on the product-token endpoint. Test through an MCP client. |
@@ -86,7 +86,7 @@ Prefer the UI setup above. If editing `~/.codex/config.toml`, update the existin
 
 ```toml
 [mcp_servers.my_product_board]
-url = "https://YOUR_PERMANENT_DOMAIN/api/mcp"
+url = "https://YOUR_PERMANENT_DOMAIN/api/mcp/workspace"
 enabled = true
 http_headers = { Authorization = "Bearer REPLACE_WITH_YOUR_PRODUCT_TOKEN" }
 ```
@@ -97,7 +97,7 @@ For CLI users who intentionally manage process environment variables, the altern
 
 ```toml
 [mcp_servers.my_product_board]
-url = "https://YOUR_PERMANENT_DOMAIN/api/mcp"
+url = "https://YOUR_PERMANENT_DOMAIN/api/mcp/workspace"
 enabled = true
 bearer_token_env_var = "PROJECTKANBAN_MCP_TOKEN"
 ```

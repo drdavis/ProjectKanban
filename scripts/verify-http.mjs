@@ -2,6 +2,10 @@
 const base=process.env.PROJECTKANBAN_BASE_URL??'https://projectkanban-omega.vercel.app';
 const cases=[
  ['Homepage','/','GET',200],
+ ['Invitation page','/invite','GET',200],
+ ...['collaboration','invitations','integrations','integration-jobs','my-work','preferences','export','release-notes'].map(route=>['Unauthenticated '+route,'/api/'+route,'GET',401]),
+ ...['collaboration','invitations','integrations','integration-jobs','preferences'].map(route=>['Unauthenticated '+route+' write','/api/'+route,'POST',401]),
+ ['Workspace MCP without token','/api/mcp/workspace','POST',401],
  ['Unauthenticated board','/api/kanban','GET',401],
  ['Unauthenticated board write','/api/kanban','POST',401],
  ['Unauthenticated attachment list','/api/attachments','GET',401],

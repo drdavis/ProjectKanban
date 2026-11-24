@@ -1,4 +1,5 @@
 import { createNeonAuth } from "@neondatabase/auth/next/server";
+import { acceptInvitations } from "./invitations";
 import { eq } from "drizzle-orm";
 import { database } from "./db";
 import { products, productMembers } from "./schema";
@@ -16,6 +17,7 @@ export async function auth() {
   const {data} = await neonAuth()?.getSession() ?? {};
   const user = data?.user;
   if (!user) return {userId: null};
+  if (user.emailVerified === true) await acceptInvitations({id:user.id,email:user.email,name:user.name,emailVerified:true});
   if (emailIsAllowed(user.email, user.emailVerified === true, process.env.AUTH_ALLOWED_EMAILS)) return {userId: user.id};
   // Existing owners and explicitly added product members retain access. A new
   // provider account cannot bootstrap its own workspace through product.create.

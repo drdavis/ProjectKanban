@@ -17,7 +17,7 @@ Files can be attached after the first save. CSV attachment URLs remain source re
 
 ## Separate logins and board access
 
-Each person must use their own account. The owner grants the person's existing Neon Auth user ID **Editor** access under the chosen product's **Access** panel. That membership lets the person update cards on this product; it does not give access to the owner's other products. Catalog queries filter by ownership/membership, and direct product requests enforce the same boundary on the server. Viewers cannot edit; only owners can change membership or work type. A shared owner login cannot provide this separation.
+Each person must use their own account. The owner invites the person's email with **Editor** access under the chosen product's **Access** panel. Share the generated link, or enable optional Resend delivery. The person must verify that exact email. The existing user-ID membership editor is still available. That membership lets the person update cards on this product; it does not give access to the owner's other products. Catalog queries filter by ownership/membership, and direct product requests enforce the same boundary on the server. Viewers cannot edit; only owners can change membership or work type. A shared owner login cannot provide this separation.
 
 Confirm the intended account identity before granting access. Test with that person's login: their board should appear, another unshared product URL should return no product, and membership/settings changes should be denied.
 

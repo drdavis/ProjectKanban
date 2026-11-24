@@ -51,13 +51,13 @@ ProjectKanban is under active development. Check the [recorded verification resu
 
 ## Run one shared installation
 
-**[Central deployment and multi-computer setup](docs/central-deployment.md)** covers Vercel + Neon, cost comparisons, two Codex and two Claude Code installations, separate credentials, concurrent work, and private data in a public-source project. Use one hosted database and one stable MCP URL; accounts and computers can differ. The current credentials remain product-scoped.
+**[Central deployment and multi-computer setup](docs/central-deployment.md)** covers Vercel + Neon, cost comparisons, two Codex and two Claude Code installations, separate credentials, concurrent work, and private data in a public-source project. Use one hosted database and one stable MCP URL; accounts and computers can differ. Connections authorize an explicit set of products; every workspace MCP operation names its target product.
 
 This project is MIT licensed. Anyone can self-host their own installation; access to an operator's existing deployment is not included.
 
 ## Connect your coding tool
 
-Open a product’s **MCP access** panel for step-by-step setup with copy buttons. Use a product token with `/api/mcp`; the token selects the product.
+Open a product’s **MCP access** panel for step-by-step setup with copy buttons. Use `/api/mcp/workspace` for one connection across explicitly selected products. Existing single-product tokens and `/api/mcp` remain supported.
 
 **[Complete MCP setup and troubleshooting guide](docs/mcp.md)** — Codex Desktop, exact header fields, multiple products, connection verification, and the separate optional OAuth setup.
 
@@ -70,7 +70,7 @@ Use **Configure → Import CSV** to migrate an Airtable export. Preview the mapp
 1. Install dependencies with `npm ci` using Node.js 24.
 2. Copy `.env.example` to `.env.local`. Create a Neon PostgreSQL database and enable Neon Auth with Better Auth on its branch. Set NEON_AUTH_BASE_URL to the branch auth endpoint and generate NEON_AUTH_COOKIE_SECRET with openssl rand -base64 32. Use the pooled URL for `DATABASE_URL` and the direct URL for `DATABASE_URL_UNPOOLED`. Configure an AI provider if you want to use the planner. For internal use, restrict account registration through Neon Auth.
 3. Apply the database schema with `node --env-file=.env.local node_modules/drizzle-kit/bin.cjs migrate`.
-4. Set `AUTH_ALLOWED_EMAILS` to the first owner's email and verify that email in Neon Auth. Existing product owners and explicitly assigned product members retain application access. Public signup and social sign-in routes are blocked; a provider account alone does not grant workspace access. Keep signup disabled in Neon Auth too.
+4. Set `AUTH_ALLOWED_EMAILS` to the first owner's email and verify that email in Neon Auth. Existing product owners and explicitly assigned product members retain application access. Public signup and social sign-in routes are blocked; an unexpired invitation permits signup for its exact email; a provider account alone does not grant workspace access. Configure Neon Auth email verification before inviting new collaborators.
 5. Start the app with `npm run dev` and sign in at http://localhost:3000.
 
 Set the same variables in Vercel before deploying. Use separate credentials and databases for production and development. Apply the migration to the target database before the first deployment.
@@ -83,7 +83,7 @@ Set the same variables in Vercel before deploying. Use separate credentials and 
 4. Ask the AI planner for a set of changes. Review the field changes and apply or dismiss the proposal.
 5. Inspect Activity to see updates and their source.
 
-The first release uses private product catalogs per Neon Auth user. The application checks product ownership or explicit membership on every API operation. Product revisions catch stale manual edits and AI plans, and PostgreSQL transactions commit card changes and activity together. GitHub integration currently consists of repository, issue, and pull-request URLs. The product catalog, data model, and planner scope support 20 or more products in one database.
+The first release uses private product catalogs per Neon Auth user. The application checks product ownership or explicit membership on every API operation. Product revisions catch stale manual edits and AI plans, and PostgreSQL transactions commit card changes and activity together. Signed GitHub and Vercel webhooks can attach PR, CI, and deployment evidence; configure them under Configure. The product catalog, data model, and planner scope support 20 or more products in one database.
 
 ## Verification after setup
 
@@ -115,7 +115,7 @@ Connect a product, then copy the opt-in workflow from **MCP access → Add agent
 
 ## Planning and tracking work
 
-Use **Roadmap** to create releases and compare saved roadmap versions. Assign release, phase, milestone, owner, and topic tags in card details. Use **Plan product** to work through a draft and publish the reviewed roadmap and backlog cards together. Drafts and saved views are stored in the browser. Readiness flags blocked cards, serious bugs, and fixes awaiting verification.
+Use **Configure** to create releases and compare saved roadmap versions. Assign release, phase, milestone, owner, and topic tags in card details. Use **Plan product** to work through a draft and publish the reviewed roadmap and backlog cards together. Saved views persist to your account. Planning drafts have explicit account Save/Load actions plus local autosave. Readiness flags blocked cards, serious bugs, and fixes awaiting verification.
 
 Run `node --test tests/*.test.mjs` and `npm run typecheck` before a release. Use the fictional samples to verify the authenticated workflow after applying migrations.
 
@@ -145,3 +145,7 @@ The lockfile fixes the tested dependency graph. Security overrides keep Neon Aut
 ### Human task boards
 
 Choose a per-product human-task card style for operations work, with Name, Notes, Assignee, Status, Attachments, and Attachment Summary. SaaS products retain their software verification workflow. See [human tasks and board access](docs/human-tasks.md).
+
+## Collaboration roadmap delivery
+
+See [implemented features, activation steps, and acceptance limits](docs/roadmap-delivery.md). My Work, invitations, recurring tasks, agent claims/handoffs, integration event retries, outcomes, cycles, and release review extend the existing boards.

@@ -1,5 +1,10 @@
 "use client";
 
+import {CardTemplate} from "./card-template";
+import { ProductPlanning } from "./product-planning";
+import { Integrations } from "./integrations";
+import { MyWork } from "./my-work";
+import { WorkDetails } from "./work-details";
 import { TaskForm } from "./task-form";
 import { CsvImport } from "./csv-import";
 import { phaseTint } from "../lib/phase-colors";
@@ -28,7 +33,7 @@ import { Button } from "./ui/button";
 import { fetchPlannerConnection, ProviderSettings } from "./provider-settings";
 import { providerLabels, type PublicProviderConnection } from "../lib/provider-config";
 
-type Product = typeof products.$inferSelect;
+type Product = typeof products.$inferSelect & {archived?:boolean};
 type Card = typeof cards.$inferSelect;
 type Kind = z.infer<typeof kind>;
 type Operation = z.infer<typeof planSchema>["operations"][number];
@@ -42,7 +47,7 @@ export type Snapshot = {
   roadmapVersions: Array<typeof activity.$inferSelect>;
 };
 
-type Panel = "csv" | "product" | "settings" | "import" | "card" | "ai" | "history" | "portfolio" | "planning" | "provider" | "members" | "mcp";
+type Panel = "work" | "csv" | "product" | "settings" | "import" | "card" | "ai" | "history" | "portfolio" | "planning" | "provider" | "members" | "mcp";
 const candidates = Object.keys(sampleProducts) as (keyof typeof sampleProducts)[];
 
 async function request<T>(productId?: string, command?: z.input<typeof mutation>, providerSelection?: string): Promise<T> {
@@ -102,6 +107,15 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   const [tag, setTag] = useState("");
   const [responsible, setResponsible] = useState("");
   const [filter, setFilter] = useState("");
+  const [filterScope,setFilterScope]=useState('');
+  useEffect(()=>{if(!selected||preview)return;try{const v=JSON.parse(localStorage.getItem('projectkanban:filters:'+userId+':'+selected)??'{}');setBoard(v.board==='bug'?'bug':'development');setFilter(typeof v.filter==='string'?v.filter:'');setPhase(typeof v.phase==='string'?v.phase:'');setTag(typeof v.tag==='string'?v.tag:'');setResponsible(typeof v.responsible==='string'?v.responsible:'');}catch{}setFilterScope(selected);},[selected,userId,preview]);
+  useEffect(()=>{if(!selected||preview||filterScope!==selected)return;try{localStorage.setItem('projectkanban:filters:'+userId+':'+selected,JSON.stringify({board,filter,phase,tag,responsible}));}catch{}},[selected,userId,preview,filterScope,board,filter,phase,tag,responsible]);
+  const [showArchived,setShowArchived]=useState(false);
+  const [listMode,setListMode]=useState(false);
+  const [bulkIds,setBulkIds]=useState<string[]>([]);
+  const [bulkStatus,setBulkStatus]=useState("Backlog");
+  const [quickTitle,setQuickTitle]=useState("");
+  useEffect(()=>{setBulkIds([]);setBulkStatus(workflows[board][0]);},[selected,board,filter,phase,tag,responsible]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [prompt, setPrompt] = useState("");
@@ -118,10 +132,11 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   const canEdit = isOwner || snapshot?.role === "editor";
   const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}));
 
+  useEffect(()=>{if(selected&&!preview)try{localStorage.setItem("projectkanban:selected:"+userId,selected);}catch{}},[selected,userId,preview]);
   const loadCatalog = useCallback(async () => {
     const items = await request<Product[]>();
     setCatalog(items);
-    setSelected((current) => current || items[0]?.id || "");
+    setSelected((current) => {let saved="";try{saved=localStorage.getItem("projectkanban:selected:"+userId)??"";}catch{}return items.some(i=>i.id===current)?current:items.some(i=>i.id===saved)?saved:items[0]?.id??"";});
   }, []);
 
   useEffect(() => {
@@ -199,7 +214,8 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
       <div className="brand"><span className="brand-mark" aria-hidden="true"><i/><i/><i/></span><strong className="brand-wordmark"><span className="wordmark-project">Project</span><span className="wordmark-kanban">Kanban</span></strong></div>
       <div className="catalog-label">Products <button disabled={busy || !!preview} aria-label="Add product" onClick={() => setPanel("product")}><Plus size={17}/></button></div>
       <input className="search" aria-label="Find a product" placeholder="Find a product…" value={search} onChange={(event) => setSearch(event.target.value)}/>
-      <nav aria-label="Products">{catalog.filter((item) => item.name.toLowerCase().includes(search.toLowerCase())).map((item) =>
+      <label className="checkbox"><input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)}/>Show archived</label>
+      <nav aria-label="Products">{catalog.filter(item=>showArchived||!item.archived).filter((item) => item.name.toLowerCase().includes(search.toLowerCase())).map((item) =>
         <button key={item.id} disabled={busy} aria-current={item.id === selected ? "page" : undefined} onClick={() => {
           setSelected(item.id); setFilter(""); setPhase(""); setTag(""); setResponsible(""); setError("");
         }}><span className="product-icon">{item.name.slice(0, 2).toUpperCase()}</span>{item.name}</button>)}</nav>
@@ -216,6 +232,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         <div className="workspace-commands" aria-label="Product actions">
             <Button variant="ghost" disabled={busy || !!preview} aria-label="Refresh board" onClick={() => void run(async () => setSnapshot(await request<Snapshot>(selected)))}><RefreshCw size={16}/></Button>
             <Button variant="outline" onClick={() => setPanel("settings")}>Configure</Button>
+            {!preview && <Button variant="outline" onClick={()=>setPanel("work")}>My Work</Button>}
             {!preview && <Button variant="outline" onClick={() => setPanel("portfolio")}>Portfolio</Button>}
             <Button variant="outline" onClick={() => setPanel("history")}>Activity</Button>
             {canEdit && !taskMode && <Button variant="outline" onClick={() => setPanel("planning")}>Plan product</Button>}
@@ -223,6 +240,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
             {isOwner && <Button variant="outline" onClick={() => setPanel("members")}>Access</Button>}
             {isOwner && <Button variant="outline" onClick={() => {setPrompt(""); setIncludeRoadmap(false); setCardIds([]); setPlannerConnection(undefined); setPanel("ai");}}><Sparkles size={16}/> AI planner{selectedProposals.length > 0 && " · " + selectedProposals.length}</Button>}
         </div>
+        {canEdit&&<form className="actions" onSubmit={e=>{e.preventDefault();if(quickTitle.trim()){void run(async()=>{await request(undefined,{action:"card.save",productId:product.id,revision:product.revision,fields:{kind:board,status:workflows[board][0],title:quickTitle}});setSnapshot(await request<Snapshot>(product.id));setQuickTitle("");});}}}><input aria-label="Quick task title" placeholder="Add a task…" value={quickTitle} onChange={e=>setQuickTitle(e.target.value)} maxLength={180}/><Button disabled={busy||!quickTitle.trim()}>Quick add</Button></form>}
         <div className="toolbar workspace-board-bar">
           <nav aria-label="Boards">
             <button aria-pressed={board === "development"} onClick={() => setBoard("development")}><Layers3 size={16}/> {taskMode ? "Tasks" : "Development"}</button>
@@ -255,18 +273,20 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           board={board} filter={filter} phase={phase} tag={tag} responsible={responsible} apply={(view) => {setBoard(taskMode ? "development" : view.board); setFilter(view.filter); setPhase(taskMode ? "" : view.phase); setTag(view.tag); setResponsible(view.responsible);}}/>}
         {!taskMode && <ReleaseReadiness policy={snapshot?.policy} key={product.id} cards={snapshot!.cards} releases={product.releases} open={(issue) => openCard(issue.status, issue)}/>}
         </div>
-        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={drag}>
+        <Button variant="outline" onClick={()=>setListMode(!listMode)}>{listMode?"Board view":"List view"}</Button>
+        {listMode&&canEdit&&<div className="actions"><label>Move selected to<select value={bulkStatus} onChange={e=>setBulkStatus(e.target.value)}>{workflows[board].map(status=><option key={status}>{status}</option>)}</select></label><Button disabled={busy||!bulkIds.length} onClick={()=>void run(async()=>{const response=await fetch("/api/collaboration",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"bulk",cardIds:bulkIds,status:bulkStatus,productId:product.id,revision:product.revision,requestId:crypto.randomUUID()})});const data=await response.json();if(!response.ok)throw new Error(data.error);setSnapshot(await request<Snapshot>(product.id));setBulkIds([]);})}>Move {bulkIds.length} selected</Button></div>}
+        {listMode ? <div className="history">{issues.map(item=><article key={item.id}>{canEdit&&<input type="checkbox" aria-label={"Select "+item.title} checked={bulkIds.includes(item.id)} onChange={e=>setBulkIds(ids=>e.target.checked?[...ids,item.id]:ids.filter(id=>id!==item.id))}/>}<Button variant="ghost" onClick={()=>openCard(item.status,item)}>{item.title}</Button><input key={item.id+item.responsible} aria-label={"Assignee label for "+item.title} defaultValue={item.responsible} placeholder="Unassigned" disabled={busy||!canEdit} maxLength={120} onBlur={e=>{if(e.target.value!==item.responsible)void save({action:"card.save",productId:product.id,revision:product.revision,cardId:item.id,fields:{...item,kind:item.kind as Kind,priority:item.priority as "Normal",severity:item.severity as "",execution:item.execution??undefined,responsible:e.target.value}},false);}}/><select aria-label={"Status for "+item.title} value={item.status} disabled={busy||!canEdit} onChange={e=>void save({action:"card.move",productId:product.id,revision:product.revision,cardId:item.id,status:e.target.value,beforeId:null},false)}>{workflows[item.kind as Kind].map(status=><option key={status}>{status}</option>)}</select></article>)}</div> : <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={drag}>
           <div className="board">{workflows[board].map((status) => <Column taskMode={taskMode} key={status} status={status}
             cards={issues.filter((item) => item.status === status)} disabled={busy || !canEdit || Boolean(filter || phase || tag || responsible)}
             open={(item) => openCard(status, item)} add={() => { if (canEdit) openCard(status); }}/>)}</div>
-        </DndContext>
+        </DndContext>}
       </> : <div className="empty-state"><Layers3 size={34}/><h1>{loading || selected ? "Loading workspace…" : "Add your first product"}</h1>
         {!loading && !selected && <><p>Every product gets a Development board and a Bug Fixes board.</p><div className="actions">
           <Button onClick={() => setPanel("product")}><Plus size={16}/> New product</Button>
           <Button variant="outline" onClick={() => setPanel("import")}>Add sample products</Button>
         </div></>}</div>}
     </main>
-    {panel && <Sheet key={panel} title={{csv: "Import CSV", product: "New product", settings: "Configure product", import: "Add sample products", card: card ? "Edit card" : "New card", ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Product access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
+    {panel && <Sheet key={panel} title={{work:"My Work",csv: "Import CSV", product: "New product", settings: "Configure product", import: "Add sample products", card: card ? "Edit card" : "New card", ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Product access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
       {error && <p className="error" role="alert">{error}</p>}
       {(panel === "product" || (panel === "settings" && isOwner)) && <form onSubmit={(event) => {
         const values = form(event);
@@ -280,9 +300,14 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         <p className="muted">Nothing is sent when you save this setting. AI proposals require a configured provider and an explicit request. Codex and Claude MCP access is configured separately.</p>
         <Button type="submit" disabled={busy || !!preview}>Save product</Button>
       </form>}
+      {panel === "work" && <MyWork open={(productId,cardId)=>{void run(async()=>{const next=await request<Snapshot>(productId);setSelected(productId);setSnapshot(next);const found=next.cards.find(c=>c.id===cardId);if(found){setCard(found);setKind(found.kind as Kind);setInitialStatus(found.status);setPanel("card");}});}}/>}
       {panel === "csv" && product && isOwner && !preview && <CsvImport productId={product.id} revision={product.revision} onImported={async()=>setSnapshot(await request<Snapshot>(product.id))}/>}
       {panel === "settings" && product && <section className="history">
-        {isOwner && !preview && <div><h3>Import tasks</h3><p>Bring tasks from an Airtable CSV export, including historical completed work.</p><Button variant="outline" onClick={() => setPanel("csv")}>Import CSV</Button></div>}
+        {isOwner&&!preview&&<Button variant="outline" disabled={busy} onClick={()=>void run(async()=>{const archived=!!catalog.find(p=>p.id===product.id)?.archived;const response=await fetch("/api/collaboration",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"archive",productId:product.id,revision:product.revision,requestId:crypto.randomUUID(),archived:!archived})});const result=await response.json();if(!response.ok)throw new Error(result.error);await loadCatalog();setSnapshot(await request<Snapshot>(product.id));})}>{catalog.find(p=>p.id===product.id)?.archived?"Restore product":"Archive product"}</Button>}
+
+        {isOwner && !preview && <ProductPlanning productId={product.id} cards={snapshot!.cards} releases={product.releases} refresh={async()=>setSnapshot(await request<Snapshot>(product.id))}/>}
+        {isOwner && !preview && <Integrations productId={product.id}/>}
+        {isOwner && !preview && <div><h3>Import and export tasks</h3><a href={"/api/export?product="+product.id}>Download CSV</a><p>Bring tasks from an Airtable CSV export, including historical completed work.</p><Button variant="outline" onClick={() => setPanel("csv")}>Import CSV</Button></div>}
         {!preview && (!taskMode || isOwner) && <div><h3>AI provider</h3><p>Choose OpenRouter, OpenAI, Anthropic, or Vercel AI Gateway and save your own API key. Your provider connection applies to your account; external AI planning is enabled separately for each product.</p><Button variant="outline" onClick={() => setPanel("provider")}>Configure AI provider</Button></div>}
         {!isOwner && <><h3>Current roadmap</h3><p style={{whiteSpace: "pre-wrap"}}>{product.roadmap || "No roadmap yet."}</p></>}
         {!taskMode && <><h3>Releases</h3>
@@ -343,6 +368,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         } as unknown as z.input<typeof cardFields>;
         save({action: "card.save", productId: product.id, revision: product.revision, cardId: card?.id, fields});
       }}>
+        {!card && <CardTemplate/>}
         <RoadmapFields releases={product.releases} assignment={card?.roadmapAssignment}/>
         <label>Responsible person<input name="responsible" maxLength={100} defaultValue={card?.responsible}/></label>
         <label>Topic tags, separated by commas<input name="topics" defaultValue={card?.tags.join(", ")}/></label>
@@ -376,6 +402,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         {!preview && <CardAttachments key={card?.id ?? "new"} productId={product.id} cardId={card?.id} canEdit={canEdit}/>}
         <Button type="submit" disabled={busy || !canEdit}>Save card</Button>
       </form>}
+      {panel === "card" && card && product && !preview && <WorkDetails key={card.id} productId={product.id} card={snapshot!.cards.find(item=>item.id===card.id)??card} refresh={async()=>{const next=await request<Snapshot>(product.id);setSnapshot(next);setCard(next.cards.find(item=>item.id===card.id));}}/>}
       {panel === "card" && card && product && isOwner && snapshot?.policy?.allowOwnerExceptions && !preview && <details><summary>Owner readiness exception</summary><form onSubmit={event=>{const values=form(event);save({action:"card.exception",productId:product.id,revision:product.revision,cardId:card.id,status:String(values.get("destination")),reason:String(values.get("reason"))});}}>
         <p>This applies only to this transition. Dependency checks and passing completion evidence cannot be waived. Save your card edits first.</p>
         <label>Destination<select name="destination">{workflows[kind].map(status=><option key={status}>{status}</option>)}</select></label>
@@ -433,7 +460,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           </div>
         </section>)}
       </>}
-      {panel === "mcp" && product && isOwner && <McpAccess key={product.id} productId={product.id} productName={product.name}/>}
+      {panel === "mcp" && product && isOwner && <McpAccess key={product.id} productId={product.id} productName={product.name} products={catalog.filter(p=>p.owner===product.owner)}/>}
       {panel === "members" && product && isOwner && <MemberPanel key={product.id} productId={product.id}/>}
       {panel === "planning" && product && <PlanningWizard key={product.id} ownerId={userId ?? product.owner}
         productId={product.id} productName={product.name} roadmap={product.roadmap} revision={product.revision} publish={async (plan, revision) => {

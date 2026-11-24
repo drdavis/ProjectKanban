@@ -1,3 +1,4 @@
+import { collabCommand } from "./collaboration.ts";
 import { z } from "zod";
 import { createArgs, moveArgs, updateArgs, roadmapArgs } from "./mcp-inputs.ts";
 import { agentWorkflow, workflowVersion } from "./agent-workflow.ts";
@@ -36,6 +37,7 @@ const writeTools = [
 ];
 
 export type McpWriters = {
+  collaborate?: (args:z.output<typeof collabCommand>)=>Promise<unknown>;
   create: (args: z.output<typeof createArgs>) => Promise<unknown>;
   move: (args: z.output<typeof moveArgs>) => Promise<unknown>;
   update?: (args: z.output<typeof updateArgs>) => Promise<unknown>;
@@ -87,10 +89,17 @@ export async function handleMcpRequest(request: Request, readers: McpReaders, wr
         {name:"get_workflow",description:"Read the opt-in planning, execution, bug triage and verification workflow, templates and version.",inputSchema:z.toJSONSchema(z.object({}).strict()),annotations:{readOnlyHint:true}},
         ...(readers.getProduct ? [{name:"get_product",description:"Read this product’s roadmap, releases, revision and workflow policy before planning or writes.",inputSchema:z.toJSONSchema(z.object({}).strict()),annotations:{readOnlyHint:true}}] : []),
         ...(writers ? writeTools : []),
+        ...(writers?.collaborate ? [{name:"collaborate",description:"Assign authorized humans, comment, claim/release work, save agent handoffs and record delivery evidence. Human ownership is separate from agent execution. Requires latest revision and a unique requestId.",inputSchema:z.toJSONSchema(collabCommand),annotations:{readOnlyHint:false,destructiveHint:false}}] : []),
         ...(writers?.update ? [{name:"update_card",description:"Partially update a card's brief, bug report, plan, tests, evidence or metadata. Requires latest product revision; does not move the card.",inputSchema:z.toJSONSchema(updateArgs),annotations:{readOnlyHint:false,destructiveHint:false}}] : []),
         ...(writers?.roadmap ? [{name:"update_roadmap",description:"Publish a reviewed roadmap and optional complete release list. Requires a roadmap-enabled token, latest revision and retry requestId.",inputSchema:z.toJSONSchema(roadmapArgs),annotations:{readOnlyHint:false,destructiveHint:false}}] : []),
       ]});
     case "tools/call": {
+      if(params?.name === "collaborate"){
+        if(!writers?.collaborate)return reply({isError:true,content:[{type:"text",text:"Write access is required."}]});
+        const parsed=collabCommand.safeParse(params.arguments);if(!parsed.success)return error(-32602,"Invalid collaboration arguments.",requestId);
+        const outcome=await writers.collaborate(parsed.data);
+        return outcome && typeof outcome==="object" && "error" in outcome?reply({isError:true,content:[{type:"text",text:String(outcome.error)}]}):toolResult(outcome);
+      }
       if (params?.name === "get_workflow" || params?.name === "get_product") {
         if (!z.object({}).strict().safeParse(params.arguments ?? {}).success) return error(-32602,"Expected empty arguments.",requestId);
         if (params.name === "get_workflow") return toolResult({version:workflowVersion,instructions:agentWorkflow,

@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "./ui/button";
 import { agentWorkflow, workflowVersion } from "../lib/agent-workflow";
 
-type TokenMetadata = { id: string; label: string; canWrite: boolean; canPlan?: boolean; expiresAt: string };
+type TokenMetadata = { id: string; label: string; canWrite: boolean; canPlan?: boolean; expiresAt: string; lastSeen?: string; lastProduct?:string };
 type IssuedToken = TokenMetadata & { token: string };
 
 async function tokenRequest<T>(url: string, init?: RequestInit): Promise<T> {
@@ -14,7 +14,7 @@ async function tokenRequest<T>(url: string, init?: RequestInit): Promise<T> {
   return result;
 }
 
-export function McpAccess({productId, productName}: {productId: string; productName: string}) {
+export function McpAccess({productId, productName, products=[]}: {productId: string; productName: string; products?:Array<{id:string;name:string}>}) {
   const [tokens, setTokens] = useState<TokenMetadata[]>();
   const [issued, setIssued] = useState<IssuedToken>();
   const [error, setError] = useState("");
@@ -24,7 +24,7 @@ export function McpAccess({productId, productName}: {productId: string; productN
   const [copied, setCopied] = useState("");
   const endpoint = "/api/mcp/tokens?product=" + encodeURIComponent(productId);
 
-  useEffect(() => { setServerUrl(window.location.origin + "/api/mcp"); }, []);
+  useEffect(() => { setServerUrl(window.location.origin + "/api/mcp/workspace"); }, []);
 
   async function copy(value: string, label: string) {
     try {
@@ -42,7 +42,7 @@ export function McpAccess({productId, productName}: {productId: string; productN
     return () => controller.abort();
   }, [endpoint, opened]);
 
-  async function submit(action: {action: "issue"; label: string; canWrite: boolean; canPlan: boolean} | {action: "revoke"; tokenId: string}) {
+  async function submit(action: {action: "issue"; label: string; canWrite: boolean; canPlan: boolean;productIds?:string[]} | {action: "revoke"; tokenId: string}) {
     setBusy(true);
     setError("");
     try {
@@ -68,7 +68,7 @@ export function McpAccess({productId, productName}: {productId: string; productN
   async function issue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    if (await submit({action: "issue", label: String(new FormData(form).get("label")), canWrite: new FormData(form).has("canWrite"), canPlan: new FormData(form).has("canPlan")})) form.reset();
+    if (await submit({action: "issue", label: String(new FormData(form).get("label")), canWrite: new FormData(form).has("canWrite"), canPlan: new FormData(form).has("canPlan"),productIds:new FormData(form).getAll("productIds").map(String)})) form.reset();
   }
 
   return <details open onToggle={(event) => setOpened(event.currentTarget.open)}>
@@ -79,10 +79,11 @@ export function McpAccess({productId, productName}: {productId: string; productN
       <p>Open this panel on your permanent production domain, not a temporary deployment or local preview.</p>
       <label>Server URL<input readOnly value={serverUrl} onFocus={(event) => event.currentTarget.select()}/></label>
       <Button variant="outline" disabled={!serverUrl} onClick={() => void copy(serverUrl, "Server URL")}>Copy server URL</Button>
-      <p><strong>The URL must end with /api/mcp.</strong> Do not append a product name or use /api/mcp/magic-diagram with a product token. The token selects {productName}.</p>
-      <h3>2. Create a token for this product</h3>
+      <p>This workspace endpoint lets your tool discover authorized products with list_products. Every product operation requires an explicit productId. Existing single-product connections at /api/mcp continue to work.</p>
+      <h3>2. Authorize products for this connection</h3>
       <p>Tokens expire after 30 days. Select write access if your coding tool should add and move cards. Leave it unchecked for read-only access.</p>
       <form onSubmit={issue}>
+        <label>Additional products<select name="productIds" multiple>{products.filter(p=>p.id!==productId).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label><p>{productName} is always included. Select only the other products this coding tool needs.</p>
         <label>Token label<input name="label" required maxLength={80} placeholder="e.g. Codex on my laptop"/></label>
         <label className="checkbox"><input type="checkbox" name="canWrite"/> Allow this token to create, edit and move cards</label>
         <label className="checkbox"><input type="checkbox" name="canPlan"/> Also allow reviewed roadmap and release updates (requires card write access)</label>
@@ -100,7 +101,7 @@ export function McpAccess({productId, productName}: {productId: string; productN
         <Button variant="ghost" onClick={() => setIssued(undefined)}>Hide token</Button>
       </div>}
       <h3>3. Add or edit the connection in your coding tool</h3>
-      <p>In Codex, open Settings → MCP servers and add or edit an HTTP server. Use a distinct name for each product.</p>
+      <p>In Codex, open Settings → MCP servers and add or edit an HTTP server. Use a recognizable name for each coding tool or computer.</p>
       <ul>
         <li><strong>Name:</strong> a recognizable name for {productName}.</li>
         <li><strong>Transport:</strong> HTTP / Streamable HTTP.</li>
@@ -132,6 +133,7 @@ export function McpAccess({productId, productName}: {productId: string; productN
       <h3>Manage existing tokens</h3>
       {tokens && tokens.length > 0 && <ul>{tokens.map((token) => <li className="proposal" key={token.id}>
         <strong>{token.label} · {token.canWrite ? "Card read and write" : "Read only"}{token.canPlan ? " + roadmap" : ""}</strong>
+        <p>Last request: {token.lastSeen ? new Date(token.lastSeen).toLocaleString() : "Not observed yet"}{token.lastProduct && " · Product "+token.lastProduct}</p>
         <p>{new Date(token.expiresAt).getTime() <= Date.now() ? "Expired" : "Expires " + new Date(token.expiresAt).toLocaleDateString()}</p>
         <Button variant="outline" disabled={busy} onClick={() => void submit({action: "revoke", tokenId: token.id})}>Revoke token</Button>
       </li>)}</ul>}

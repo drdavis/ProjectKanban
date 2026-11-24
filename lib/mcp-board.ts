@@ -1,3 +1,4 @@
+import { collaborate,latestEvent } from "./collaboration-store";
 import { readQualityPolicy } from "./quality-policy-store";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -5,20 +6,20 @@ import { RequestError, saveCard } from "./card-write";
 import { cardFields } from "./workflow";
 import { mergeExecution, qualityIssues } from "./card-quality";
 import { assignmentIsValid } from "./roadmap";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql, or } from "drizzle-orm";
 import { database } from "./db";
 import { handleMcpRequest, type McpWriters } from "./mcp-protocol";
-import { activity, cards, products } from "./schema";
+import { activity, cards, products, productMembers } from "./schema";
 import { workflowVersion } from "./agent-workflow";
 
 type Transaction = Parameters<Parameters<ReturnType<typeof database>["transaction"]>[0]>[0];
 
-export async function handleBoardMcp(request: Request, access: {productId: string; owner: string; canWrite: boolean; canPlan?: boolean},
+export async function handleBoardMcp(request: Request, access: {productId: string; owner: string; canWrite: boolean; canPlan?: boolean; tokenId?:string; label?:string},
   verifyWrite: (tx: Transaction, productId: string) => Promise<void>) {
   const db = database();
   const productScope = eq(cards.productId, access.productId);
   const owned = and(eq(products.id, access.productId), eq(products.owner, access.owner));
-  const actor = "MCP · " + access.owner;
+  const actor = "MCP · " + (access.label??"Agent") + " · " + (access.tokenId??access.owner);
 
   async function transact(expectedRevision: number | undefined, requestId: string | undefined, payload: unknown,
     run: (tx: Transaction, product: typeof products.$inferSelect) => Promise<unknown>) {
@@ -30,7 +31,7 @@ export async function handleBoardMcp(request: Request, access: {productId: strin
         const hash = createHash("sha256").update(JSON.stringify(payload)).digest("hex");
         if (requestId) {
           const [existing] = await tx.select({after:activity.after}).from(activity).where(and(
-            eq(activity.productId,product.id),eq(activity.actor,actor),eq(activity.action,"MCP request"),
+            eq(activity.productId,product.id),or(eq(activity.actor,actor),eq(activity.actor,"MCP · "+access.owner)),eq(activity.action,"MCP request"),
             sql`${activity.after}->>'requestId' = ${requestId}`,
           )).limit(1);
           if (existing) {
@@ -53,6 +54,7 @@ export async function handleBoardMcp(request: Request, access: {productId: strin
   }
   const summary = (card: typeof cards.$inferSelect) => ({id:card.id,title:card.title,status:card.status});
   const writers: McpWriters = {
+    collaborate: input=>transact(input.revision,input.requestId,input,(tx,product)=>collaborate(tx,product,actor,"editor",input)),
     create: ({board,requestId,expectedRevision,acceptanceCriteria,...fields}) => transact(expectedRevision,requestId,{operation:"create",board,acceptanceCriteria,...fields},async(tx,product)=>
       summary(await saveCard(tx,product.id,actor,cardFields.parse({...fields,criteria:acceptanceCriteria,kind:board,status:board==="bug"?"Reported":"Backlog"})))),
     move: ({cardId,status,expectedRevision}) => transact(expectedRevision,undefined,{cardId,status},async(tx,product)=>{
@@ -88,6 +90,8 @@ export async function handleBoardMcp(request: Request, access: {productId: strin
       return {id:product.id,name:product.name,roadmap:product.roadmap,releases:product.releases,repository:product.repository,
         revision:product.revision,workflowVersion,permissions:{read:true,write:access.canWrite,roadmap:!!access.canPlan},
         qualityPolicy,
+        connection:{identity:actor,tokenId:access.tokenId,label:access.label},
+        members:[{userId:product.owner,role:"owner"},...await db.select({userId:productMembers.userId,role:productMembers.role}).from(productMembers).where(eq(productMembers.productId,product.id))],
         policy:qualityPolicy.workType === "tasks" ? "Human task cards use title, description (notes), responsible (assignee), status, and execution.attachmentSummary. Mark Done when the human reports completion; do not invent passing test results. Dependencies must still be complete. Bug cards retain software checks." : "Incomplete cards can remain at intake. Advancing requires acceptance criteria and a test plan; structured briefs/reports have additional requirements. Closing requires passing evidence. Prerequisites must be verified. No automatic overrides."};
     },
     async listCards({board,status,offset,limit}) {
@@ -103,8 +107,10 @@ export async function handleBoardMcp(request: Request, access: {productId: strin
         const [card]=await tx.select().from(cards).where(and(productScope,eq(cards.id,cardId))).limit(1);
         if (!card) return null;
         const policy=await readQualityPolicy(tx,access.productId);
+        const handoff=(await latestEvent(tx,access.productId,"Agent handoff",cardId))?.after??null;
+        const claim=(await latestEvent(tx,access.productId,"Agent claim",cardId))?.after??null;
         const attachments=await tx.select({id:activity.id,metadata:sql`${activity.after} - 'data'`}).from(activity).where(and(eq(activity.productId,access.productId),eq(activity.action,"Stored attachment"),sql`${activity.after}->>'cardId' = ${cardId}`));
-        return {...card,attachments,board:card.kind,acceptanceCriteria:card.criteria,repository:product.repository,revision:product.revision,
+        return {...card,attachments,handoff,claim,board:card.kind,acceptanceCriteria:card.criteria,repository:product.repository,revision:product.revision,
           readiness:{toStart:qualityIssues(card,card.kind==="bug"?"Ready to Fix":"Ready",policy),toComplete:qualityIssues(card,card.kind==="bug"?"Closed":"Done",policy)}};
       });
     },

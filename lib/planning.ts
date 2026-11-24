@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { releaseFields } from "./roadmap.ts";
 const plannedCard = z.object({
+  brief:z.object({audience:z.string().max(10000),problem:z.string().max(10000),outcome:z.string().max(10000),scope:z.string().max(10000)}).optional(),
   title: z.string().trim().min(1).max(180),
   description: z.string().trim().min(1).max(10000),
   criteria: z.string().trim().min(1).max(10000),

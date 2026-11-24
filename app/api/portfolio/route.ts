@@ -17,6 +17,6 @@ export async function GET() {
   const closed = new Set(visible.filter(({status}) => ["Done", "Closed"].includes(status)).map(({cardId}) => cardId));
   const visibleIds = new Set(visible.map(({cardId}) => cardId));
   return Response.json({items: visible.map(({execution, ...item}) => ({
-    ...item, blocked: execution?.blockers.some((id) => visibleIds.has(id) && !closed.has(id)) ?? false,
+    ...item,dueDate:execution?.work?.dueDate??null,cycle:execution?.work?.cycle??"",outcome:execution?.work?.outcome??"",impact:execution?.work?.impact??0,effort:execution?.work?.effort??0,source:execution?.work?.source??"", blocked: execution?.blockers.some((id) => visibleIds.has(id) && !closed.has(id)) ?? false,
   })), truncated: result.length > 500});
 }

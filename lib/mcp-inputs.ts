@@ -40,6 +40,7 @@ const executionPatch = z.object({
   result: executionFields.shape.result.removeDefault().optional(),
   evidence: executionFields.shape.evidence.removeDefault().optional(),
   attachmentSummary: executionFields.shape.attachmentSummary.unwrap().removeDefault().optional(),
+  work: executionFields.shape.work,
   parentId: executionFields.shape.parentId,
   brief: briefPatch.optional(), bug: bugPatch.optional(),
 }).strict();

@@ -1,4 +1,5 @@
 "use client";
+import {CardTemplate} from "./card-template";
 import type { z } from "zod";
 import type { cards } from "../lib/schema";
 import { cardFields, workflows, executionFields } from "../lib/workflow";
@@ -15,6 +16,7 @@ export function TaskForm({card,status,productId,canEdit,busy,preview,save}:{card
       execution:{...executionFields.parse(card?.execution??{}),attachmentSummary:String(data.get("attachmentSummary"))}});
   }}>
     <p>Describe the work, assign it, and update its status. Choose Done when the task is complete.</p>
+    {!card && <CardTemplate human/>}
     <label>Name<input name="title" required maxLength={180} defaultValue={card?.title}/></label>
     <label>Notes<textarea name="description" rows={7} maxLength={10000} defaultValue={card?.description}/></label>
     <label>Assignee<input name="responsible" maxLength={100} defaultValue={card?.responsible}/></label>

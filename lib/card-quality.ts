@@ -1,4 +1,5 @@
 import { defaultQualityPolicy, type QualityPolicy } from "./quality-policy.ts";
+import { workFields } from "./collaboration.ts";
 import { z } from "zod";
 
 const text = z.string().trim().max(10000).default("");
@@ -19,6 +20,7 @@ export const executionFields = z.object({
   verificationRequired: z.boolean().default(false), testPlan: text,
   result: z.enum(["Pending", "Passed", "Failed"]).default("Pending"), evidence: text,
   attachmentSummary: text.optional(),
+  work: workFields.optional(),
   brief: briefFields.optional(), bug: bugFields.optional(), parentId: z.uuid().nullable().optional(),
 }).strict();
 export type Execution = z.output<typeof executionFields>;

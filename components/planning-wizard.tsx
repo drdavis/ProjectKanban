@@ -60,6 +60,9 @@ export function PlanningWizard({ownerId, productId, productName, roadmap, revisi
   const storageKey = "projectkanban:planning:" + ownerId + ":" + productId;
   const [draft, setDraft] = useState(() => newDraft(roadmap));
   const [loadedKey, setLoadedKey] = useState("");
+  const [cloudVersion,setCloudVersion]=useState<string|null>(null);
+  const [cloudReady,setCloudReady]=useState(false);
+  const [cloudMessage,setCloudMessage]=useState("");
   const [storageWarning, setStorageWarning] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -90,6 +93,14 @@ export function PlanningWizard({ownerId, productId, productName, roadmap, revisi
     setDraft(initial);
     setLoadedKey(storageKey);
   }, [storageKey, loadedKey, roadmap]);
+
+  useEffect(()=>{let active=true;setCloudReady(false);fetch("/api/preferences?product="+productId+"&key=planning").then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error);if(active){setCloudVersion(d.version);setCloudReady(true);if(d.value)setCloudMessage("A draft is saved to your account. Load it to continue on this device.");}}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[productId]);
+  async function cloudDraft(load=false){setBusy(true);setError("");try{
+    const response=await fetch("/api/preferences"+(load?"?product="+productId+"&key=planning":""),load?{}:{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productId,key:"planning",version:cloudVersion,value:draft})});
+    const result=await response.json();if(!response.ok)throw new Error(result.error);
+    if(load&&result.value){const restored=draftSchema.parse(result.value);setDraft(restored);try{localStorage.setItem(storageKey,JSON.stringify(restored));}catch{}}
+    setCloudVersion(result.version);setCloudMessage(load?"Account draft loaded.":"Draft saved to your account.");
+  }catch(e){setError(e instanceof Error?e.message:"Draft sync failed.");}finally{setBusy(false);}}
 
   function update(changes: Partial<Draft>) {
     const changed = {...draft, ...changes};
@@ -137,7 +148,7 @@ export function PlanningWizard({ownerId, productId, productName, roadmap, revisi
         setError("The roadmap has changed. Review the latest roadmap before publishing.");
         return;
       }
-      const result = publishedPlan.safeParse({requestId: crypto.randomUUID(), roadmap: roadmapText(draft), cards: draft.cards, ...(draft.mode === "release" ? {release:{name:draft.name,phases:draft.phases.split("\n").map(s=>s.trim()).filter(Boolean),milestones:draft.milestones.split("\n").map(s=>s.trim()).filter(Boolean)}} : {})});
+      const result = publishedPlan.safeParse({requestId: crypto.randomUUID(), roadmap: roadmapText(draft), cards: draft.cards.map(card=>({...card,brief:{audience:draft.audience,problem:draft.problem,outcome:card.description,scope:card.criteria}})), ...(draft.mode === "release" ? {release:{name:draft.name,phases:draft.phases.split("\n").map(s=>s.trim()).filter(Boolean),milestones:draft.milestones.split("\n").map(s=>s.trim()).filter(Boolean)}} : {})});
       if (!result.success) {
         setError("Check that all cards are complete and the resulting roadmap fits within 12,000 characters.");
         return;
@@ -164,6 +175,7 @@ export function PlanningWizard({ownerId, productId, productName, roadmap, revisi
 
   const {step, mode, cards} = draft;
   return <section aria-label="Guided planning for this product">
+    <div className="actions"><Button variant="outline" disabled={busy||!cloudReady} onClick={()=>void cloudDraft()}>Save account draft</Button><Button variant="outline" disabled={busy||!cloudReady} onClick={()=>void cloudDraft(true)}>Load account draft</Button></div>{cloudMessage&&<p role="status">{cloudMessage}</p>}
     <p>Turn an idea into a reviewed roadmap and development cards. Define the outcome, organize phases and milestones, write cards and test plans, then review and publish. You can complete this without AI.</p>
     <p className="muted">Step {step + 1} of {stages.length} · {productName}</p>
     <h3>{stages[step][0]}</h3>

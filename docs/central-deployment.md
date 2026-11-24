@@ -9,9 +9,9 @@ Deploy one application and one database. Connect each Codex or Claude Code insta
 - **GitHub:** application source, migrations and shared operating instructions. Do not use Git to synchronize live database exports or credentials.
 - **Coding clients:** one separately labeled token per installation and product. All use `https://YOUR_PERMANENT_DOMAIN/api/mcp`.
 
-A laptop can go offline without taking the board offline. The database is authoritative. Coding sessions do not automatically share chat history, local source changes, saved filters or unsubmitted planning drafts. Saved views and guided drafts currently live in browser storage; publish reviewed plans and record handoffs on cards before changing computers.
+A laptop can go offline without taking the board offline. The database is authoritative. Coding sessions do not automatically share chat history or local source changes. Saved views synchronize through the account. Planning drafts have explicit Save/Load account draft controls, with browser autosave as a local safety copy. Record handoffs on cards before changing computers.
 
-The current MCP is **product-scoped**. One endpoint does not mean one token can access all products. For several products, configure a separate connection/token per product. Workspace-wide discovery and credentials are not implemented. The optional OAuth pilot is separate from the standard token route.
+The workspace MCP endpoint `/api/mcp/workspace` discovers only products explicitly authorized when issuing the token. Call `list_products`, then pass the intended `productId` on each scoped operation. Existing `/api/mcp` connections remain single-product. The optional OAuth pilot is separate from the standard token route.
 
 ## Hosting choice and cost
 
@@ -112,11 +112,11 @@ Ask each client to call `get_workflow`, `get_product`, `list_cards` and `get_car
 
 ## Coordinate simultaneous work
 
-Use different cards and branches per assistant. Before writing, read the latest product revision; after a conflict, reread and reconcile. Revision protection detects stale writes but does not lock a card for an agent. Agree ownership explicitly and avoid two agents implementing the same files concurrently. Put the branch/commit, changed paths, tests, results, blockers and next action on the card before handing off. Refresh the browser board to see external writes.
+Use different cards and branches per assistant. Before writing, read the latest product revision; after a conflict, reread and reconcile. Revision protection detects stale writes. Use the `collaborate` claim command for a 30-minute agent claim and renew or release it explicitly. Agree ownership explicitly and avoid two agents implementing the same files concurrently. Put the branch/commit, changed paths, tests, results, blockers and next action on the card before handing off. Refresh the browser board to see external writes.
 
 Install the opt-in guidance from [agent-workflow.md](agent-workflow.md) in each project's `AGENTS.md` for Codex and `CLAUDE.md` for Claude Code, preserving existing instructions. An MCP connection does not automatically install instructions or run agents in the background.
 
-If separate people or identities need the browser UI, provision their Neon Auth users and add the actual user IDs through the product's **Access** panel with editor/viewer roles. A different ChatGPT or Claude email does not itself grant browser access. Adding an email to `AUTH_ALLOWED_EMAILS` allows app entry but does not make another user's products visible.
+If separate people or identities need the browser UI, invite their email through the product's **Access** panel with editor/viewer roles. Membership requires that exact verified email. A different ChatGPT or Claude email does not itself grant browser access. Adding an email to `AUTH_ALLOWED_EMAILS` allows app entry but does not make another user's products visible.
 
 ## Public source, private operation
 

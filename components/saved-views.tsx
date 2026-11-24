@@ -1,48 +1,11 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
-
-type View = {name: string; board: "development" | "bug"; filter: string; phase: string; tag: string; responsible: string};
-
-export function SavedViews({storageKey, board, filter, phase, tag, responsible, apply}: {
-  storageKey: string; board: View["board"]; filter: string; phase: string; tag: string; responsible: string; apply: (view: View) => void;
-}) {
-  const [views, setViews] = useState<View[]>([]);
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  useEffect(() => {
-    try {
-      const saved: unknown = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
-      setViews(Array.isArray(saved) ? saved.filter((item) => item &&
-        typeof item.name === "string" && typeof item.filter === "string" &&
-        ["development", "bug"].includes(item.board)).map((item) => ({...item, phase: item.phase ?? "", tag: item.tag ?? "", responsible: item.responsible ?? ""})) : []);
-    } catch {setViews([]);}
-  }, [storageKey]);
-
-  function save(next: View[]) {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      setViews(next);
-      setError("");
-    } catch {setError("This browser could not save the view.");}
-  }
-
-  return <details className="board-legend"><summary>Saved views</summary>
-    <form className="actions" onSubmit={(event) => {
-      event.preventDefault();
-      const label = name.trim();
-      if (!label) return;
-      save([...views.filter((view) => view.name !== label), {name: label, board, filter, phase, tag, responsible}]);
-      setName("");
-    }}>
-      <input aria-label="View name" placeholder="Name this board and search" value={name} onChange={(event) => setName(event.target.value)} maxLength={80}/>
-      <Button type="submit" variant="outline" disabled={!name.trim()}>Save view</Button>
-    </form>
-    {error && <p role="alert">{error}</p>}
-    <div>{views.map((view) => <section className="actions" key={view.name}>
-      <Button variant="outline" onClick={() => apply(view)}>{view.name}</Button>
-      <Button variant="ghost" aria-label={"Remove view " + view.name} onClick={() => save(views.filter((item) => item !== view))}>Remove</Button>
-    </section>)}</div>
-  </details>;
+'use client';
+import {useEffect,useState} from 'react';
+import {Button} from './ui/button';
+type View={name:string;board:'development'|'bug';filter:string;phase:string;tag:string;responsible:string};
+export function SavedViews({storageKey,board,filter,phase,tag,responsible,apply}:{storageKey:string;board:View['board'];filter:string;phase:string;tag:string;responsible:string;apply:(view:View)=>void}){
+ const productId=storageKey.split(':').at(-1)!;
+ const [views,setViews]=useState<View[]>([]),[version,setVersion]=useState<string|null>(null),[name,setName]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(true);
+ useEffect(()=>{let active=true;setBusy(true);fetch('/api/preferences?product='+productId+'&key=views').then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error);if(!active)return;setVersion(d.version);const legacy=JSON.parse(localStorage.getItem(storageKey)??'[]');const list=d.value??legacy;setViews(Array.isArray(list)?list.filter(v=>v&&typeof v.name==='string'&&typeof v.filter==='string'&&['development','bug'].includes(v.board)):[]);}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setBusy(false);});return()=>{active=false;};},[storageKey,productId]);
+ async function save(next:View[]){setBusy(true);setError('');try{const r=await fetch('/api/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productId,key:'views',version,value:next})});const d=await r.json();if(!r.ok)throw new Error(d.error);setVersion(d.version);setViews(next);try{localStorage.setItem(storageKey,JSON.stringify(next));}catch{}}catch(e){setError(e instanceof Error?e.message:'Save failed.');}finally{setBusy(false);}}
+ return <details className="board-legend"><summary>Saved views</summary><p>Saved to your account for this product, across computers.</p><form className="actions" onSubmit={e=>{e.preventDefault();const label=name.trim();if(label)void save([...views.filter(v=>v.name!==label),{name:label,board,filter,phase,tag,responsible}]);setName('');}}><input aria-label="View name" value={name} onChange={e=>setName(e.target.value)} maxLength={80}/><Button disabled={busy||!name.trim()}>Save view</Button></form>{error&&<p role="alert">{error}</p>}{views.map(v=><section className="actions" key={v.name}><Button variant="outline" onClick={()=>apply(v)}>{v.name}</Button><Button variant="ghost" disabled={busy} onClick={()=>void save(views.filter(item=>item!==v))}>Remove</Button></section>)}</details>;
 }

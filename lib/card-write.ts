@@ -1,9 +1,11 @@
 import { readQualityPolicy } from "./quality-policy-store";
 import { exceptionCanWaive } from "./quality-policy";
-import { asc, eq } from "drizzle-orm";
+import { nextDueDate, canClaim, type Claim } from "./collaboration";
+import { latestEvent } from "./collaboration-store";
+import { asc, eq, and, sql } from "drizzle-orm";
 import type { z } from "zod";
 import type { database } from "./db";
-import { activity, cards, products } from "./schema";
+import { activity, cards, products, productMembers } from "./schema";
 import { cardFields, executionFields, workflows } from "./workflow";
 import { assignmentIsValid } from "./roadmap";
 import { qualityIssues, briefFields, bugFields, executionAfterTransition } from "./card-quality";
@@ -16,6 +18,8 @@ export class RequestError extends Error {
 
 export async function saveCard(tx: Transaction, productId: string, actor: string, input: z.input<typeof cardFields>, cardId?: string, beforeId?: string | null, exception?: {reason:string}) {
   const fields = cardFields.parse(input);
+  const archived=(await latestEvent(tx,productId,"Product archive"))?.after as {archived?:boolean}|undefined;
+  if(archived?.archived)throw new RequestError("Restore this archived product before editing.",409);
   const policy = await readQualityPolicy(tx,productId);
   const humanTask = policy.workType === "tasks" && fields.kind === "development";
   const legal = workflows[fields.kind];
@@ -26,6 +30,10 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
   const all = await tx.select().from(cards).where(eq(cards.productId, productId)).orderBy(asc(cards.position));
   const previous = all.find((card) => card.id === cardId);
   if (cardId && !previous) throw new RequestError("Card not found.", 404);
+  if(cardId){
+    const claim=(await latestEvent(tx,productId,"Agent claim",cardId))?.after as Claim|undefined;
+    if(actor.startsWith("MCP ·")&&!canClaim(claim,actor))throw new RequestError("Another agent has claimed this task. Read its handoff or wait for the claim to expire.",409);
+  }
   const assignment = fields.roadmapAssignment === undefined ? previous?.roadmapAssignment ?? null : fields.roadmapAssignment;
   if (assignment) {
     const [product] = await tx.select({releases: products.releases}).from(products).where(eq(products.id, productId));
@@ -33,6 +41,11 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
   }
   const execution = executionAfterTransition(executionFields.parse(fields.execution ?? previous?.execution ?? {verificationRequired: true,
     ...(fields.kind === "bug" ? {bug: bugFields.parse({})} : {brief: briefFields.parse({})})}), previous?.status, fields.status);
+  if(execution.work?.assigneeId){
+    const [owner]=await tx.select({owner:products.owner}).from(products).where(eq(products.id,productId));
+    const [member]=await tx.select().from(productMembers).where(and(eq(productMembers.productId,productId),eq(productMembers.userId,execution.work.assigneeId)));
+    if(owner?.owner!==execution.work.assigneeId&&!member)throw new RequestError("The account assignee must have access to this board.");
+  }
   // Clients cannot erase an adopted brief by omitting it from a replacement plan.
   execution.brief ??= previous?.execution?.brief;
   execution.bug ??= previous?.execution?.bug;
@@ -103,5 +116,14 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     : await tx.insert(cards).values({...values, productId}).returning();
   if (waived) await tx.insert(activity).values({productId,actor,action:"Granted quality exception",after:{cardId:saved.id,status:fields.status,reason:exception!.reason,waived:missing}});
   await tx.insert(activity).values({productId, actor, action: previous ? "Updated card" : "Created card", before: previous, after: saved});
+  const recipient=saved.execution?.work?.assigneeId;
+  if(recipient && recipient!==previous?.execution?.work?.assigneeId && recipient!==actor)await tx.insert(activity).values({productId,actor,action:"Private notification",after:{recipient,cardId:saved.id,text:"Assigned: "+saved.title}});
+  if(["Done","Closed"].includes(saved.status) && !["Done","Closed"].includes(previous?.status??"") && saved.execution?.work?.recurrenceDays){
+    const [occurrence]=await tx.select({id:activity.id}).from(activity).where(and(eq(activity.productId,productId),eq(activity.action,"Created recurring task"),sql`${activity.after}->>'cardId' = ${saved.id}`)).limit(1);
+    if(occurrence)return saved;
+    const work=saved.execution.work;
+    const next=await saveCard(tx,productId,actor,{...fields,status:fields.kind==="bug"?"Reported":"Backlog",execution:{...execution,result:"Pending",evidence:"",approved:false,blockers:[],work:{...work,dueDate:nextDueDate(work.dueDate,work.recurrenceDays!),checklist:work.checklist.map(item=>({...item,done:false}))}}});
+    await tx.insert(activity).values({productId,actor,action:"Created recurring task",after:{cardId:saved.id,nextCardId:next.id,dueDate:next.execution?.work?.dueDate}});
+  }
   return saved;
 }

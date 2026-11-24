@@ -7,7 +7,7 @@ import { sampleProducts } from "../../../lib/samples";
 import { auth } from "../../../lib/auth";
 import { ProviderConfigurationError, resolvePlannerProvider } from "../../../lib/planner-provider";
 import { generateText, Output } from "ai";
-import { and, asc, desc, eq, inArray, or, sql, ne } from "drizzle-orm";
+import { getTableColumns, and, asc, desc, eq, inArray, or, sql, ne } from "drizzle-orm";
 import { z } from "zod";
 import { database } from "../../../lib/db";
 import { activity, cards, productMembers, products, proposals } from "../../../lib/schema";
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     const db = database();
     const productId = new URL(request.url).searchParams.get("product");
     if (!productId) {
-      return Response.json(await db.select().from(products).where(or(
+      return Response.json(await db.select({...getTableColumns(products),archived:sql<boolean>`coalesce((select (a.after->>'archived')::boolean from activity a where a.product_id = ${products.id} and a.action = 'Product archive' order by a.created_at desc, a.id desc limit 1), false)`}).from(products).where(or(
         eq(products.owner, userId),
         inArray(products.id, db.select({id: productMembers.productId}).from(productMembers).where(eq(productMembers.userId, userId))),
       )).orderBy(asc(products.name)));
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
         cards: await tx.select().from(cards).where(eq(cards.productId, id)).orderBy(asc(cards.position)),
         proposals: role !== "owner" ? [] : await tx.select().from(proposals).where(and(eq(proposals.productId, id), eq(proposals.state, "pending"))).orderBy(desc(proposals.createdAt)).limit(30),
         roadmapVersions: await tx.select().from(activity).where(and(eq(activity.productId, id), eq(activity.action, "Saved roadmap version"))).orderBy(desc(activity.createdAt), desc(activity.id)),
-        activity: await tx.select().from(activity).where(and(eq(activity.productId, id), ne(activity.action, "Stored attachment"))).orderBy(desc(activity.createdAt)).limit(50),
+        activity: await tx.select().from(activity).where(and(eq(activity.productId, id), ne(activity.action, "Stored attachment"), sql`${activity.action} not like 'Private %'`)).orderBy(desc(activity.createdAt)).limit(50),
       };
     });
     return Response.json(snapshot);
@@ -189,7 +189,7 @@ export async function POST(request: Request) {
         ]);
         for (const card of input.plan.cards) {
           await saveCard(tx, product.id, userId, {...card, kind: "development", status: "Backlog",
-            execution:executionFields.parse({verificationRequired:true,testPlan:card.testPlan}),
+            execution:executionFields.parse({verificationRequired:true,testPlan:card.testPlan,brief:card.brief}),
             roadmapAssignment:release?{releaseId:release.id,phase:card.phase||undefined,milestone:card.milestone||undefined}:null,
           });
         }

@@ -1,14 +1,14 @@
 import { auth } from "../../../../lib/auth";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { database } from "../../../../lib/db";
 import { createMcpToken, isMcpOriginAllowed } from "../../../../lib/mcp-token";
-import { products, mcpTokens } from "../../../../lib/schema";
+import { products, mcpTokens, activity } from "../../../../lib/schema";
 
 export const runtime = "nodejs";
 const productId = z.uuid();
 const operations = z.discriminatedUnion("action", [
-  z.object({action: z.literal("issue"), productId, label: z.string().trim().min(1).max(80), canWrite: z.boolean().default(false), canPlan: z.boolean().default(false)}),
+  z.object({action: z.literal("issue"), productId, label: z.string().trim().min(1).max(80), productIds:z.array(z.uuid()).max(30).optional(), canWrite: z.boolean().default(false), canPlan: z.boolean().default(false)}),
   z.object({action: z.literal("revoke"), productId, tokenId: z.uuid()}),
 ]);
 const metadata = {
@@ -29,7 +29,10 @@ export async function GET(request: Request) {
     const [product] = await db.select({id: products.id}).from(products)
       .where(and(eq(products.id, input.data), eq(products.owner, userId))).limit(1);
     if (!product) return json({error: "Product not found."}, 404);
-    return json(await db.select(metadata).from(mcpTokens)
+    return json(await db.select({...metadata,
+      lastSeen:sql<string>`(select a.created_at from activity a where a.product_id = ${mcpTokens.productId} and a.action = 'Private MCP connection' and a.after->>'tokenId' = ${mcpTokens.id}::text order by a.created_at desc limit 1)`,
+      lastProduct:sql<string>`(select a.after->>'productId' from activity a where a.product_id = ${mcpTokens.productId} and a.action = 'Private MCP connection' and a.after->>'tokenId' = ${mcpTokens.id}::text order by a.created_at desc limit 1)`
+    }).from(mcpTokens)
       .where(and(eq(mcpTokens.productId, product.id), eq(mcpTokens.createdBy, userId)))
       .orderBy(desc(mcpTokens.createdAt)).limit(100));
   } catch {
@@ -58,6 +61,9 @@ export async function POST(request: Request) {
         const [revoked] = await tx.delete(mcpTokens).where(and(scope, eq(mcpTokens.id, input.tokenId))).returning({id: mcpTokens.id});
         return revoked ? json({ok: true}) : json({error: "Token not found."}, 404);
       }
+      const productIds=[...new Set([product.id,...(input.productIds??[])])];
+      const authorizedProducts=await tx.select({id:products.id}).from(products).where(and(inArray(products.id,productIds),eq(products.owner,userId)));
+      if(authorizedProducts.length!==productIds.length)return json({error:"Select only products you own."},403);
       const existing = await tx.select({id: mcpTokens.id}).from(mcpTokens).where(scope).limit(100);
       if (existing.length >= 100) return json({error: "Revoke an old token before creating another."}, 409);
       const {token, digest} = createMcpToken();
@@ -65,7 +71,8 @@ export async function POST(request: Request) {
         productId: product.id, createdBy: userId, label: input.label, canWrite: input.canWrite, canPlan: input.canWrite && input.canPlan, digest,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       }).returning(metadata);
-      return json({...issued, token}, 201);
+      await tx.insert(activity).values({createdAt:sql`clock_timestamp()`,productId:product.id,actor:userId,action:"Private MCP scope",after:{tokenId:issued.id,productIds}});
+      return json({...issued, token,productIds}, 201);
     });
   } catch {
     return json({error: "Could not manage product tokens."}, 500);
