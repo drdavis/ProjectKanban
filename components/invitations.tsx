@@ -26,7 +26,7 @@ export function Invitations({productId}:{productId:string}){
  <fieldset disabled={busy}><label>Name<input name="name" maxLength={100}/></label><label>Email<input name="email" type="email" required/></label><label>Role<select name="role"><option value="editor">Editor — update tasks</option><option value="viewer">Viewer — read only</option></select></label>
  <label className="checkbox"><input type="checkbox" checked={sendEmail} disabled={!emailAvailable||!loaded} onChange={e=>setEmailChoice(e.target.checked)}/>Send invitation email</label>
  {loaded&&!emailAvailable&&<p>Email delivery is not configured. You can create a link and share it yourself.</p>}
- <Button disabled={busy||!loaded}>{busy?(sendEmail?'Sending invitation…':'Saving invitation…'):sendEmail?'Send invitation email':'Create link only'}</Button></fieldset></form>
+ <Button type="submit" disabled={busy||!loaded}>{busy?(sendEmail?'Sending invitation…':'Saving invitation…'):sendEmail?'Send invitation email':'Create link only'}</Button></fieldset></form>
  {result&&<div ref={feedback} tabIndex={-1} className={'invitation-result '+(result.delivery?.status==='sent'?'success':'')} role="status" aria-live="polite">
  <strong>{result.revoked?'Invitation revoked':deliveryLabel(result.delivery)}</strong>
  {result.email&&<p>Recipient: <strong>{result.email}</strong></p>}

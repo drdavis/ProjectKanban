@@ -186,7 +186,7 @@ test('link-only invitation never sends and rejected emails retain explicit failu
   let response=await api.invitationsPOST(req('/api/invitations',{action:'invite',productId:p.id,email:'invitee@example.test',name:'Invitee',role:'editor',sendEmail:false}));assert.equal((await response.json()).delivery.status,'not-requested');assert.equal(calls,0);
   process.env.RESEND_API_KEY='fixture-not-a-real-key';process.env.INVITATION_FROM_EMAIL='Board <invite@example.test>';
   response=await api.invitationsPOST(req('/api/invitations',{action:'invite',productId:p.id,email:'invitee@example.test',name:'Invitee',role:'editor',sendEmail:true}));const failed=await response.json();assert.equal(failed.emailSent,false);assert.equal(failed.delivery.status,'failed');assert.ok(failed.delivery.reason.includes('sender'));assert.ok(failed.url);
-  const rows=await (await api.invitationsGET(req('/api/invitations?product='+p.id))).json();assert.equal(rows[0].delivery.status,'failed');
+  const rows=await (await api.invitationsGET(req('/api/invitations?product='+p.id))).json();assert.equal(rows.find(row=>row.id===failed.invitationId).delivery.status,'failed');
  }finally{globalThis.fetch=originalFetch;delete process.env.RESEND_API_KEY;delete process.env.INVITATION_FROM_EMAIL;}
 });
 test('uncertain email outcome does not claim failure or overwrite concurrent invitation acceptance',async()=>{

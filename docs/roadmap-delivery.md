@@ -72,3 +72,5 @@ Invitation sending now shows a prominent recipient-specific result and stores th
 Email is selected by default when configured, with explicit Send invitation email / Create link only buttons and in-flight duplicate-click protection. The favicon uses a navy PK monogram with a mint K.
 
 Verification: 65 tests passed, including mocked provider acceptance/rejection/connection failure, persistent receipt reads, owner-only history, and preserving concurrent invitation acceptance. Production build passed. No real invitation was sent during these tests.
+
+Invitation submission correction: the shared Button defaults to type=button, so the invitation form action was inert. Explicit type=submit now invokes the send handler. A rendered-form regression check covers this behavior; 66 tests and the production build passed. Provider delivery still requires a real send.

@@ -17,3 +17,12 @@ test('human view renders client context and excludes software board names',()=>{
  assert.ok(markup.includes('Acme'));assert.ok(markup.includes('D3'));assert.ok(markup.includes('Send client report'));assert.ok(markup.includes('Awaiting approval'));
  assert.equal(markup.includes('Bug Fixes'),false);assert.equal(markup.includes('Development'),false);assert.equal(markup.includes('Verification evidence'),false);
 });
+
+test('invitation action renders a submit button rather than an inert shared button',async()=>{
+ const file=join(temp,'invitations.mjs');
+ await build({entryPoints:['components/invitations.tsx'],outfile:file,bundle:true,platform:'node',format:'esm',packages:'external',jsx:'automatic',logLevel:'silent'});
+ const {Invitations}=await import(pathToFileURL(file));
+ const markup=renderToStaticMarkup(React.createElement(Invitations,{productId:'board'}));
+ const form=markup.match(/<form[\s\S]*?<\/form>/)?.[0];assert.ok(form);
+ assert.match(form,/<button[^>]*type="submit"[^>]*>Create link only<\/button>/);
+});
