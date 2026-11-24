@@ -1,5 +1,7 @@
+import {taskBoardFields} from "./task-board.ts";
 import { z } from "zod";
 export const qualityPolicyFields=z.object({
+  taskBoard:taskBoardFields.default(()=>taskBoardFields.parse({})),
   workType:z.enum(["software","tasks"]).default("software"),
   requireStructuredBrief:z.boolean().default(true),
   requireBugDetails:z.boolean().default(true),

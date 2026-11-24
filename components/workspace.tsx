@@ -1,5 +1,9 @@
 "use client";
 
+import {TaskWorkspace} from "./task-workspace";
+import {TaskBoardSettings} from "./task-board-settings";
+import {defaultTaskBoard} from "../lib/task-board";
+import {workFields} from "../lib/collaboration";
 import {CardTemplate} from "./card-template";
 import { ProductPlanning } from "./product-planning";
 import { Integrations } from "./integrations";
@@ -126,6 +130,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   const [loading, setLoading] = useState(true);
   const locked = useRef(false);
   const product = snapshot?.product.id === selected ? snapshot.product : undefined;
+  const taskConfig=snapshot?.policy?.taskBoard??defaultTaskBoard;
   const taskMode = snapshot?.policy?.workType === "tasks";
   useEffect(() => { if (taskMode) { setBoard("development"); setPhase(""); } }, [taskMode]);
   const isOwner = snapshot?.role === "owner";
@@ -212,8 +217,8 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   return <div className="workspace">
     <aside className="sidebar">
       <div className="brand"><span className="brand-mark" aria-hidden="true"><i/><i/><i/></span><strong className="brand-wordmark"><span className="wordmark-project">Project</span><span className="wordmark-kanban">Kanban</span></strong></div>
-      <div className="catalog-label">Products <button disabled={busy || !!preview} aria-label="Add product" onClick={() => setPanel("product")}><Plus size={17}/></button></div>
-      <input className="search" aria-label="Find a product" placeholder="Find a product…" value={search} onChange={(event) => setSearch(event.target.value)}/>
+      <div className="catalog-label">Boards <button disabled={busy || !!preview} aria-label="Add product" onClick={() => setPanel("product")}><Plus size={17}/></button></div>
+      <input className="search" aria-label="Find a board" placeholder="Find a board…" value={search} onChange={(event) => setSearch(event.target.value)}/>
       <label className="checkbox"><input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)}/>Show archived</label>
       <nav aria-label="Products">{catalog.filter(item=>showArchived||!item.archived).filter((item) => item.name.toLowerCase().includes(search.toLowerCase())).map((item) =>
         <button key={item.id} disabled={busy} aria-current={item.id === selected ? "page" : undefined} onClick={() => {
@@ -226,8 +231,8 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
       {error && !panel && <p className="error" role="alert">{error}</p>}
       {product ? <>
         <header className="workspace-header">
-          <div><div className="breadcrumb">Products</div><h1>{product.name}</h1></div>
-          <Button disabled={!canEdit} onClick={() => openCard(workflows[board][0])}><Plus size={17}/> New card</Button>
+          <div><div className="breadcrumb">{taskMode?"Client tasks":"Products"}</div><h1>{product.name}</h1></div>
+          <Button disabled={!canEdit} onClick={() => openCard(workflows[board][0])}><Plus size={17}/> {taskMode?"New task":"New card"}</Button>
         </header>
         <div className="workspace-commands" aria-label="Product actions">
             <Button variant="ghost" disabled={busy || !!preview} aria-label="Refresh board" onClick={() => void run(async () => setSnapshot(await request<Snapshot>(selected)))}><RefreshCw size={16}/></Button>
@@ -240,6 +245,12 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
             {isOwner && <Button variant="outline" onClick={() => setPanel("members")}>Access</Button>}
             {isOwner && <Button variant="outline" onClick={() => {setPrompt(""); setIncludeRoadmap(false); setCardIds([]); setPlannerConnection(undefined); setPanel("ai");}}><Sparkles size={16}/> AI planner{selectedProposals.length > 0 && " · " + selectedProposals.length}</Button>}
         </div>
+        {taskMode?<TaskWorkspace key={product.id} cards={snapshot!.cards.filter(c=>c.kind==='development')} config={taskConfig} productId={product.id} userId={userId??product.owner} preview={!!preview} canEdit={canEdit} busy={busy} open={(c,status)=>openCard(c?.status??status??'Backlog',c)}
+          move={async(c,status)=>{await request(undefined,{action:'card.move',productId:product.id,revision:product.revision,cardId:c.id,status,beforeId:null});setSnapshot(await request<Snapshot>(product.id));}}
+          assign={async(c,assigneeId)=>{const r=await fetch('/api/collaboration',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'work',productId:product.id,revision:product.revision,requestId:crypto.randomUUID(),cardId:c.id,fields:{...workFields.parse(c.execution?.work??{}),assigneeId:assigneeId||null}})});const d=await r.json();if(!r.ok)throw new Error(d.error);setSnapshot(await request<Snapshot>(product.id));}}
+          quickAdd={async(title,client,agency)=>{await request(undefined,{action:'card.save',productId:product.id,revision:product.revision,fields:{kind:'development',status:'Backlog',title,execution:{work:{client,agency}}}});setSnapshot(await request<Snapshot>(product.id));}}
+          classify={async(ids,client,agency)=>{const r=await fetch('/api/collaboration',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'classify',productId:product.id,revision:product.revision,requestId:crypto.randomUUID(),cardIds:ids,client,agency})});const d=await r.json();if(!r.ok)throw new Error(d.error);setSnapshot(await request<Snapshot>(product.id));}}
+          bulk={async(ids,status)=>{const r=await fetch('/api/collaboration',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk',productId:product.id,revision:product.revision,requestId:crypto.randomUUID(),cardIds:ids,status})});const d=await r.json();if(!r.ok)throw new Error(d.error);setSnapshot(await request<Snapshot>(product.id));}}/>:<>
         {canEdit&&<form className="actions" onSubmit={e=>{e.preventDefault();if(quickTitle.trim()){void run(async()=>{await request(undefined,{action:"card.save",productId:product.id,revision:product.revision,fields:{kind:board,status:workflows[board][0],title:quickTitle}});setSnapshot(await request<Snapshot>(product.id));setQuickTitle("");});}}}><input aria-label="Quick task title" placeholder="Add a task…" value={quickTitle} onChange={e=>setQuickTitle(e.target.value)} maxLength={180}/><Button disabled={busy||!quickTitle.trim()}>Quick add</Button></form>}
         <div className="toolbar workspace-board-bar">
           <nav aria-label="Boards">
@@ -279,23 +290,24 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           <div className="board">{workflows[board].map((status) => <Column taskMode={taskMode} key={status} status={status}
             cards={issues.filter((item) => item.status === status)} disabled={busy || !canEdit || Boolean(filter || phase || tag || responsible)}
             open={(item) => openCard(status, item)} add={() => { if (canEdit) openCard(status); }}/>)}</div>
-        </DndContext>}
+        </DndContext>}</>}
       </> : <div className="empty-state"><Layers3 size={34}/><h1>{loading || selected ? "Loading workspace…" : "Add your first product"}</h1>
-        {!loading && !selected && <><p>Every product gets a Development board and a Bug Fixes board.</p><div className="actions">
+        {!loading && !selected && <><p>Choose client task management or software development when creating a board.</p><div className="actions">
           <Button onClick={() => setPanel("product")}><Plus size={16}/> New product</Button>
           <Button variant="outline" onClick={() => setPanel("import")}>Add sample products</Button>
         </div></>}</div>}
     </main>
-    {panel && <Sheet key={panel} title={{work:"My Work",csv: "Import CSV", product: "New product", settings: "Configure product", import: "Add sample products", card: card ? "Edit card" : "New card", ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Product access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
+    {panel && <Sheet key={panel} title={{work:"My Work",csv: "Import CSV", product: "New product", settings: taskMode?"Configure task board":"Configure product", import: "Add sample products", card: taskMode?(card?"Edit task":"New task"):(card ? "Edit card" : "New card"), ai: "AI planner", history: "Activity", portfolio: "Portfolio", planning: "Plan product", provider: "AI Provider", members: "Board access", mcp: "MCP access"}[panel]} close={() => {if (!busy) {setPanel(undefined); setError("");}}}>
       {error && <p className="error" role="alert">{error}</p>}
       {(panel === "product" || (panel === "settings" && isOwner)) && <form onSubmit={(event) => {
         const values = form(event);
-        const fields = {aiEnabled: values.has("aiEnabled"), name: String(values.get("name")), roadmap: String(values.get("roadmap")), repository: String(values.get("repository"))};
-        save(panel === "settings" && product ? {action: "product.update", productId: product.id, revision: product.revision, fields} : {action: "product.create", fields});
+        const fields = {aiEnabled: values.has("aiEnabled"), name: String(values.get("name")), roadmap: String(values.get("roadmap")??product?.roadmap??""), repository: String(values.get("repository")??product?.repository??"")};
+        save(panel === "settings" && product ? {action: "product.update", productId: product.id, revision: product.revision, fields} : {action: "product.create", workType:values.get("workType")==="tasks"?"tasks":"software", fields});
       }}>
-        <label>Product name<input name="name" required maxLength={100} defaultValue={panel === "settings" ? product?.name : ""}/></label>
-        <label>Roadmap<textarea name="roadmap" rows={9} maxLength={12000} defaultValue={panel === "settings" ? product?.roadmap : ""}/></label>
-        <label>Primary repository URL<input name="repository" type="url" defaultValue={panel === "settings" ? product?.repository : ""}/></label>
+        {panel==="product"&&<label>Work type<select name="workType"><option value="tasks">Client and agency tasks</option><option value="software">Software development</option></select></label>}
+        <label>Board name<input name="name" required maxLength={100} defaultValue={panel === "settings" ? product?.name : ""}/></label>
+        {!taskMode&&<><label>Roadmap<textarea name="roadmap" rows={9} maxLength={12000} defaultValue={panel === "settings" ? product?.roadmap : ""}/></label>
+        <label>Primary repository URL<input name="repository" type="url" defaultValue={panel === "settings" ? product?.repository : ""}/></label></>}
         <label className="checkbox"><input name="aiEnabled" type="checkbox" defaultChecked={panel === "settings" && product?.aiEnabled}/> Allow the in-app planner to send selected context to an AI provider</label>
         <p className="muted">Nothing is sent when you save this setting. AI proposals require a configured provider and an explicit request. Codex and Claude MCP access is configured separately.</p>
         <Button type="submit" disabled={busy || !!preview}>Save product</Button>
@@ -305,11 +317,11 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
       {panel === "settings" && product && <section className="history">
         {isOwner&&!preview&&<Button variant="outline" disabled={busy} onClick={()=>void run(async()=>{const archived=!!catalog.find(p=>p.id===product.id)?.archived;const response=await fetch("/api/collaboration",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"archive",productId:product.id,revision:product.revision,requestId:crypto.randomUUID(),archived:!archived})});const result=await response.json();if(!response.ok)throw new Error(result.error);await loadCatalog();setSnapshot(await request<Snapshot>(product.id));})}>{catalog.find(p=>p.id===product.id)?.archived?"Restore product":"Archive product"}</Button>}
 
-        {isOwner && !preview && <ProductPlanning productId={product.id} cards={snapshot!.cards} releases={product.releases} refresh={async()=>setSnapshot(await request<Snapshot>(product.id))}/>}
-        {isOwner && !preview && <Integrations productId={product.id}/>}
+        {isOwner && !preview && !taskMode && <ProductPlanning productId={product.id} cards={snapshot!.cards} releases={product.releases} refresh={async()=>setSnapshot(await request<Snapshot>(product.id))}/>}
+        {isOwner && !preview && !taskMode && <Integrations productId={product.id}/>}
         {isOwner && !preview && <div><h3>Import and export tasks</h3><a href={"/api/export?product="+product.id}>Download CSV</a><p>Bring tasks from an Airtable CSV export, including historical completed work.</p><Button variant="outline" onClick={() => setPanel("csv")}>Import CSV</Button></div>}
         {!preview && (!taskMode || isOwner) && <div><h3>AI provider</h3><p>Choose OpenRouter, OpenAI, Anthropic, or Vercel AI Gateway and save your own API key. Your provider connection applies to your account; external AI planning is enabled separately for each product.</p><Button variant="outline" onClick={() => setPanel("provider")}>Configure AI provider</Button></div>}
-        {!isOwner && <><h3>Current roadmap</h3><p style={{whiteSpace: "pre-wrap"}}>{product.roadmap || "No roadmap yet."}</p></>}
+        {!isOwner && !taskMode && <><h3>Current roadmap</h3><p style={{whiteSpace: "pre-wrap"}}>{product.roadmap || "No roadmap yet."}</p></>}
         {!taskMode && <><h3>Releases</h3>
         {product.releases.map((release) => <article key={release.id}><strong>{release.name}</strong>
           <p>Phases · {release.phases.join(", ") || "None"}</p>
@@ -324,11 +336,12 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           action: "roadmap.release.save", productId: product.id, revision: product.revision, fields,
         }, false)}/>}
         </>}
-        {isOwner && !preview && <form onSubmit={event=>{const values=form(event);save({action:"quality.policy",productId:product.id,revision:product.revision,fields:{workType:values.get("workType") === "tasks" ? "tasks" : "software",requireStructuredBrief:values.has("requireStructuredBrief"),requireBugDetails:values.has("requireBugDetails"),allowOwnerExceptions:values.has("allowOwnerExceptions")}},false);}}>
+        {isOwner&&taskMode&&!preview&&<TaskBoardSettings config={taskConfig} busy={busy} save={taskBoard=>save({action:"quality.policy",productId:product.id,revision:product.revision,fields:{...defaultQualityPolicy,...snapshot?.policy,taskBoard}},false)}/>}
+        {isOwner && !preview && <details><summary>Work type and software policy</summary><form onSubmit={event=>{const values=form(event);save({action:"quality.policy",productId:product.id,revision:product.revision,fields:{...snapshot?.policy,workType:values.get("workType") === "tasks" ? "tasks" : "software",requireStructuredBrief:values.has("requireStructuredBrief"),requireBugDetails:values.has("requireBugDetails"),allowOwnerExceptions:values.has("allowOwnerExceptions")}},false);}}>
           <h3>Card style and quality policy</h3><label>Work type<select name="workType" defaultValue={snapshot?.policy?.workType ?? "software"}><option value="software">SaaS / software development</option><option value="tasks">Human tasks — simple cards</option></select></label><p>Human tasks use name, notes, assignee, status, attachments, and attachment summary. Marking Done records completion without software testing requirements. Software cards retain their planning and verification checks. Changes are recorded in history.</p>
           {([ ["requireStructuredBrief","Require structured development details before starting"], ["requireBugDetails","Require detailed reproduction information before fixing"], ["allowOwnerExceptions","Allow the owner to waive readiness fields with a written reason"] ] as const).map(([name,label])=><label className="checkbox" key={name}><input type="checkbox" name={name} defaultChecked={(snapshot?.policy??defaultQualityPolicy)[name]}/>{label}</label>)}
           <Button type="submit" disabled={busy}>Save quality policy</Button>
-        </form>}
+        </form></details>}
         {!taskMode && <><h3>Roadmap history</h3>
         <RoadmapComparison versions={snapshot!.roadmapVersions}/>
         {snapshot!.roadmapVersions.length === 0 && <p>No saved roadmap versions yet.</p>}
@@ -347,7 +360,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         {candidates.map((name) => <label className="checkbox" key={name}><input name="names" type="checkbox" value={name} disabled={catalog.some((item) => item.name === name)}/>{name}</label>)}
         <Button type="submit" disabled={busy}>Add selected products</Button>
       </form>}
-      {panel === "card" && product && taskMode && kind === "development" && <TaskForm card={card} status={initialStatus} productId={product.id} canEdit={canEdit} busy={busy} preview={!!preview} save={fields => save({action:"card.save", productId:product.id, revision:product.revision, cardId:card?.id, fields})}/>}
+      {panel === "card" && product && taskMode && kind === "development" && <TaskForm config={taskConfig} clients={[...new Set(snapshot!.cards.map(c=>c.execution?.work?.client??""))].filter(Boolean)} agencies={[...new Set(snapshot!.cards.map(c=>c.execution?.work?.agency??""))].filter(Boolean)} card={card} status={initialStatus} productId={product.id} canEdit={canEdit} busy={busy} preview={!!preview} save={fields => save({action:"card.save", productId:product.id, revision:product.revision, cardId:card?.id, fields})}/>}
       {panel === "card" && product && (!taskMode || kind === "bug") && <form onSubmit={(event) => {
         const values = form(event);
         const fields = {
@@ -402,7 +415,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         {!preview && <CardAttachments key={card?.id ?? "new"} productId={product.id} cardId={card?.id} canEdit={canEdit}/>}
         <Button type="submit" disabled={busy || !canEdit}>Save card</Button>
       </form>}
-      {panel === "card" && card && product && !preview && <WorkDetails key={card.id} productId={product.id} card={snapshot!.cards.find(item=>item.id===card.id)??card} refresh={async()=>{const next=await request<Snapshot>(product.id);setSnapshot(next);setCard(next.cards.find(item=>item.id===card.id));}}/>}
+      {panel === "card" && card && product && !preview && <WorkDetails taskMode={taskMode} key={card.id} productId={product.id} card={snapshot!.cards.find(item=>item.id===card.id)??card} refresh={async()=>{const next=await request<Snapshot>(product.id);setSnapshot(next);setCard(next.cards.find(item=>item.id===card.id));}}/>}
       {panel === "card" && card && product && isOwner && snapshot?.policy?.allowOwnerExceptions && !preview && <details><summary>Owner readiness exception</summary><form onSubmit={event=>{const values=form(event);save({action:"card.exception",productId:product.id,revision:product.revision,cardId:card.id,status:String(values.get("destination")),reason:String(values.get("reason"))});}}>
         <p>This applies only to this transition. Dependency checks and passing completion evidence cannot be waived. Save your card edits first.</p>
         <label>Destination<select name="destination">{workflows[kind].map(status=><option key={status}>{status}</option>)}</select></label>
@@ -415,6 +428,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
           event.preventDefault();
           save({action: "plan", productId: product.id, revision: product.revision, prompt, includeRoadmap, cardIds}, false);
         }}>
+          <p><strong>Target board: {product.name}</strong> · Review proposed changes before applying.</p>
           <p className="muted">{plannerConnection
             ? "Destination: " + providerLabels[plannerConnection.provider] + " · " + plannerConnection.model + " · " + (plannerConnection.source === "personal" ? "Personal key" : "Server key")
             : plannerConnection === undefined ? "Checking the planner connection…" : "No AI connection is available. Open AI Provider settings to configure one."}</p>

@@ -27,7 +27,9 @@ export async function collaborate(tx:Transaction,product:typeof products.$inferS
  const record=async(action:string,after:unknown)=>{await tx.insert(activity).values({createdAt:sql`clock_timestamp()`,productId:product.id,actor,action,after});};
  const notify=async(recipient:string,text:string)=>{if(members.has(recipient)&&recipient!==actor)await record('Private notification',{recipient,text,cardId:card?.id});};
  if(['outcome','cycle','release.review'].includes(input.action)&&role!=='owner')throw new RequestError('Owner access is required for planning and release approval.',403);
- if(input.action==='bulk'){
+ if(input.action==='classify'){
+  for(const id of new Set(input.cardIds)){const [item]=await tx.select().from(cards).where(and(eq(cards.productId,product.id),eq(cards.id,id)));if(!item)throw new RequestError('Card not found.',404);const current=workFields.parse(item.execution?.work??{});await saveCard(tx,product.id,actor,{...item,kind:item.kind as 'development'|'bug',priority:item.priority as 'Normal',severity:item.severity as '',execution:{...item.execution,work:{...current,client:input.client,agency:input.agency}}},item.id);}
+ }else if(input.action==='bulk'){
   for(const id of new Set(input.cardIds)){
    const [item]=await tx.select().from(cards).where(and(eq(cards.productId,product.id),eq(cards.id,id)));if(!item)throw new RequestError('Card not found.',404);
    await saveCard(tx,product.id,actor,{...item,kind:item.kind as 'development'|'bug',priority:item.priority as 'Normal',severity:item.severity as '',execution:item.execution??undefined,status:input.status},item.id);

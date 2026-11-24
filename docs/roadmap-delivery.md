@@ -50,3 +50,15 @@ Live acceptance still required: new collaborator signup and email verification, 
 ## Follow-up work from the full proposal
 
 The core release slices are implemented. Remaining activation and acceptance work includes the named collaborator pilot, configured provider events, and broader cross-device browser acceptance. Background reminders are an optional later expansion. These are not marked complete.
+
+## Client task follow-through — November 24
+
+Added a dedicated client-task workspace, optional agency selector, personal saved grouping/filter views, custom labels and default layouts, inline account assignment, atomic bulk client classification, and client/agency CSV import/export. New boards explicitly choose human tasks or software development. Existing boards require an owner to select the work type.
+
+The follow-through also adds portfolio aging, release risk and pending decisions; archives are excluded from My Work and portfolio; the AI planner shows its target board and requests evidence-based priority explanations. Partial MCP updates preserve omitted work fields.
+
+Activation for the existing Kris board is not confirmed. This session's MCP connection resolves to LinkKonsole. The browser runtime is unavailable, Vercel denies project-environment access, and the local Vercel CLI has no credentials. No production data migration or membership change was attempted through an unrelated credential. No client values were inferred from unseen CSV contents.
+
+The roadmap's code implementation is distinct from acceptance: a real Kris login, two real coding clients and externally configured signed webhooks remain open verification gates.
+
+Client-task verification: 62 automated tests passed, including rendered human-view labels, partial MCP metadata preservation, client/agency grouping, CSV mapping, atomic batch rollback, board isolation, owner-only customization, and archived-work exclusion. Production build passed. Interactive signed-in browser acceptance remains unverified.

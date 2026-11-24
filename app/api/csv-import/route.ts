@@ -6,7 +6,7 @@ import {database} from '../../../lib/db';
 import {activity,cards,products} from '../../../lib/schema';
 import {csvLimit,previewCsv,rowIdentity} from '../../../lib/csv-import';
 import {executionFields} from '../../../lib/card-quality';
-const inputSchema=z.object({productId:z.uuid(),revision:z.number().int(),filename:z.string().min(1).max(255),csv:z.string().max(csvLimit),mapping:z.object({title:z.string(),notes:z.string(),assignee:z.string(),status:z.string(),attachments:z.string(),summary:z.string()}).strict(),doneOnly:z.boolean(),preserveDone:z.boolean(),confirmed:z.literal(true)}).strict();
+const inputSchema=z.object({productId:z.uuid(),revision:z.number().int(),filename:z.string().min(1).max(255),csv:z.string().max(csvLimit),mapping:z.object({title:z.string(),notes:z.string(),assignee:z.string(),status:z.string(),attachments:z.string(),summary:z.string(),client:z.string().default(''),agency:z.string().default('')}).strict(),doneOnly:z.boolean(),preserveDone:z.boolean(),confirmed:z.literal(true)}).strict();
 export async function POST(request:Request){
   try{
     const {userId}=await auth();if(!userId)return Response.json({error:'Sign in to continue.'},{status:401});
@@ -28,7 +28,7 @@ export async function POST(request:Request){
         const fingerprint=createHash('sha256').update(rowIdentity(row.source)).digest('hex');
         if(known.has(fingerprint)){duplicates++;continue;}known.add(fingerprint);fingerprints.push(fingerprint);position+=1024;
         const provenance=`Imported from ${input.filename}, row ${row.row}. Original status: ${row.originalStatus||'(blank)'}. ${row.status==='Done'?'Historical completion reported by the source; not independently verified in ProjectKanban.':'Imported to Backlog for review.'}`;
-        values.push({productId:product.id,kind:'development',status:row.status,title:row.title,description:row.description,responsible:row.responsible,position,tags:['csv-import',...(row.status==='Done'?['historical-done']:[])],execution:executionFields.parse({verificationRequired:true,result:'Pending',evidence:provenance,attachmentSummary:row.source[input.mapping.summary]??''})});
+        values.push({productId:product.id,kind:'development',status:row.status,title:row.title,description:row.description,responsible:row.responsible,position,tags:['csv-import',...(row.status==='Done'?['historical-done']:[])],execution:executionFields.parse({work:{client:row.client,agency:row.agency},verificationRequired:true,result:'Pending',evidence:provenance,attachmentSummary:row.source[input.mapping.summary]??''})});
       }
       if(values.length){
         // Owner-confirmed migration only. Never mark imported history as a passed test.

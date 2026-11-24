@@ -2,6 +2,7 @@ import {z} from 'zod';
 const text=z.string().trim().max(10000);
 export const dateOnly=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v=>!Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0,10)===v,'Choose a valid date');
 export const workFields=z.object({
+  client:z.string().trim().max(120).default(''),agency:z.string().trim().max(120).default(''),
   assigneeId:z.string().max(100).nullable().default(null), dueDate:dateOnly.nullable().default(null),
   checklist:z.array(z.object({id:z.uuid(),text:z.string().trim().min(1).max(500),done:z.boolean()}).strict()).max(100).default([]),
   recurrenceDays:z.number().int().min(1).max(366).nullable().default(null),
@@ -17,6 +18,7 @@ export const cycleFields=z.object({id:z.uuid(),name:z.string().trim().min(1).max
 export const collabCommand=z.discriminatedUnion('action',[
  z.object({action:z.literal('outcome'),fields:outcomeFields}),
  z.object({action:z.literal('cycle'),fields:cycleFields}),
+ z.object({action:z.literal('classify'),cardIds:z.array(z.uuid()).min(1).max(100),client:z.string().trim().max(120),agency:z.string().trim().max(120)}),
  z.object({action:z.literal('bulk'),cardIds:z.array(z.uuid()).min(1).max(100),status:z.string().max(30)}),
  z.object({action:z.literal('release.review'),releaseId:z.uuid(),approved:z.boolean(),evidence:text.min(1)}),
  z.object({action:z.literal('work'),cardId:z.uuid(),fields:workFields}),

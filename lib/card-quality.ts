@@ -68,6 +68,7 @@ export function qualityIssues(card: QualityCard, status = card.status, policy: Q
 export function mergeExecution(current: Execution | null | undefined, patch: Record<string, unknown>): Execution {
   const before = current ?? executionFields.parse({});
   return executionFields.parse({...before, ...patch,
+    ...(patch.work ? {work:{...before.work,...(patch.work as object)}} : {}),
     ...(patch.brief ? {brief: {...before.brief, ...(patch.brief as object)}} : {}),
     ...(patch.bug ? {bug: {...before.bug, ...(patch.bug as object)}} : {}),
   });

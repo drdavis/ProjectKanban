@@ -11,7 +11,7 @@ let pg,db,api,temp;
 before(async()=>{
  temp=await mkdtemp(join(process.cwd(),'.test-collaboration-'));
  const entry=join(temp,'entry.ts');
- await writeFile(entry,`export * from '../lib/schema';export {saveCard} from '../lib/card-write';export {collaborate,latestEvent} from '../lib/collaboration-store';export {productAccess} from '../lib/product-access';export {drizzle} from 'drizzle-orm/pglite';export {eq} from 'drizzle-orm';export {GET as myWorkGET} from '../app/api/my-work/route';export {GET as collaborationGET,POST as collaborationPOST} from '../app/api/collaboration/route';export {GET as preferenceGET,POST as preferencePOST} from '../app/api/preferences/route';export {GET as kanbanGET} from '../app/api/kanban/route';export {POST as workspaceMCP} from '../app/api/mcp/workspace/route';export {createMcpToken} from '../lib/mcp-token';export {POST as hookPOST} from '../app/api/hooks/[provider]/route';export {encryptApiKey} from '../lib/provider-secrets';export {validInvitation,acceptInvitations,inviteDigest} from '../lib/invitations';`);
+ await writeFile(entry,`export * from '../lib/schema';export {saveCard} from '../lib/card-write';export {collaborate,latestEvent} from '../lib/collaboration-store';export {productAccess} from '../lib/product-access';export {drizzle} from 'drizzle-orm/pglite';export {eq} from 'drizzle-orm';export {GET as myWorkGET} from '../app/api/my-work/route';export {GET as collaborationGET,POST as collaborationPOST} from '../app/api/collaboration/route';export {GET as preferenceGET,POST as preferencePOST} from '../app/api/preferences/route';export {GET as portfolioGET} from '../app/api/portfolio/route';export {GET as exportGET} from '../app/api/export/route';export {GET as kanbanGET, POST as kanbanPOST} from '../app/api/kanban/route';export {POST as workspaceMCP} from '../app/api/mcp/workspace/route';export {createMcpToken} from '../lib/mcp-token';export {POST as hookPOST} from '../app/api/hooks/[provider]/route';export {encryptApiKey} from '../lib/provider-secrets';export {validInvitation,acceptInvitations,inviteDigest} from '../lib/invitations';`);
  const output=join(temp,'compiled.mjs');
  await build({entryPoints:[entry],outfile:output,bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent',plugins:[{name:'test-boundaries',setup(b){b.onLoad({filter:/[\/]lib[\/]auth\.ts$/},()=>({contents:'export async function auth(){return {userId:globalThis.__kanbanUser??null}}',loader:'ts'}));b.onLoad({filter:/[\/]lib[\/]db\.ts$/},()=>({contents:'export function database(){return globalThis.__kanbanDb}',loader:'ts'}));}}]});
  api=await import(pathToFileURL(output));pg=new PGlite();db=api.drizzle(pg,{casing:'snake_case'});globalThis.__kanbanDb=db;
@@ -142,4 +142,28 @@ test('unmatched signed events survive and attach on retry after a PR establishes
  r=await deliver('check_run',check,'early-ci');assert.equal((await r.json()).linked,1);
  assert.equal((await (await deliver('check_run',check,'early-ci')).json()).replayed,true);
  const events=await db.select().from(api.activity).where(api.eq(api.activity.productId,p.id));assert.equal(events.filter(e=>e.action==='Delivery evidence').length,2);
+});
+
+test('bulk client classification preserves history and rolls back cross-board batches',async()=>{
+ const p=await fixture(),c=await card(p),other=await fixture(),foreign=await card(other);
+ await command(p,'owner','owner',{action:'classify',cardIds:[c.id],client:'Acme',agency:'North'});
+ let saved=(await db.select().from(api.cards).where(api.eq(api.cards.id,c.id)))[0];assert.equal(saved.execution.work.client,'Acme');assert.equal(saved.title,c.title);
+ await assert.rejects(command(p,'owner','owner',{action:'classify',cardIds:[c.id,foreign.id],client:'Wrong',agency:'Wrong'},1),/not found/);
+ saved=(await db.select().from(api.cards).where(api.eq(api.cards.id,c.id)))[0];assert.equal(saved.execution.work.client,'Acme');
+ globalThis.__kanbanUser='editor';const csv=await (await api.exportGET(req('/api/export?product='+p.id))).text();assert.ok(csv.includes('Acme'));assert.ok(csv.includes('North'));
+ globalThis.__kanbanUser='outsider';assert.equal((await api.exportGET(req('/api/export?product='+p.id))).status,404);
+});
+test('task board customization is owner-only and preserves existing cards',async()=>{
+ const p=await fixture(),c=await card(p);const body={action:'quality.policy',productId:p.id,revision:0,fields:{workType:'tasks',taskBoard:{clientLabel:'Customer',title:'Client tasks'}}};
+ const post=()=>api.kanbanPOST(new Request('https://example.test/api/kanban',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.test',Host:'example.test'},body:JSON.stringify(body)}));
+ globalThis.__kanbanUser='editor';assert.equal((await post()).status,403);
+ globalThis.__kanbanUser='owner';assert.equal((await post()).status,200);
+ const snapshot=await (await api.kanbanGET(req('/api/kanban?product='+p.id))).json();assert.equal(snapshot.policy.taskBoard.clientLabel,'Customer');assert.ok(snapshot.cards.some(x=>x.id===c.id));
+});
+test('portfolio exposes client context only within member scope and excludes archives',async()=>{
+ const p=await fixture(),c=await card(p);await command(p,'owner','owner',{action:'classify',cardIds:[c.id],client:'Scoped client',agency:'Agency'});
+ globalThis.__kanbanUser='viewer';let data=await (await api.portfolioGET()).json();assert.equal(data.items.find(x=>x.cardId===c.id).client,'Scoped client');
+ await command(p,'owner','owner',{action:'archive',archived:true},1);
+ data=await (await api.portfolioGET()).json();assert.equal(data.items.some(x=>x.cardId===c.id),false);
+ assert.equal((await (await api.myWorkGET()).json()).items.some(x=>x.id===c.id),false);
 });

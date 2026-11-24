@@ -21,3 +21,10 @@ test('MCP task summary updates preserve other card details and cannot change boa
  assert.equal(result.testPlan,'Existing plan');
  assert.equal(updateArgs.safeParse({cardId:crypto.randomUUID(),expectedRevision:1,fields:{workType:'tasks'}}).success,false);
 });
+
+test('partial agent task updates preserve client, agency, due date and checklist',()=>{
+ const before=executionFields.parse({work:{client:'Acme',agency:'North',dueDate:'2026-12-01',checklist:[{id:crypto.randomUUID(),text:'Review draft',done:false}]}});
+ const patch=updateArgs.parse({cardId:crypto.randomUUID(),expectedRevision:1,fields:{execution:{work:{client:'Beta'}}}});
+ const result=mergeExecution(before,patch.fields.execution);
+ assert.equal(result.work.client,'Beta');assert.equal(result.work.agency,'North');assert.equal(result.work.dueDate,'2026-12-01');assert.equal(result.work.checklist.length,1);
+});

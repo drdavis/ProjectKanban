@@ -232,3 +232,11 @@ input,select,textarea {background:var(--surface);}
 .planning-inputs { border:0; padding:0; margin:0; min-width:0; }
 .attachment-panel { border:1px dashed var(--line); border-radius:12px; padding:14px; margin:16px 0; }
 .attachment-panel:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+
+.task-group { margin: 24px 0; padding: 16px; border: 1px solid #d9dee6; border-radius: 16px; }
+.task-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #e2e5eb; flex-wrap:wrap; }
+.task-row-title { flex:1; min-width:180px; }
+.task-row-title button { text-align:left; font-weight:600; }
+.task-row-title small { display:block; margin-top:5px; color:#586272; }
+.task-row > select { width:auto; max-width:220px; }
+.task-row > input[type=checkbox] { width:18px; flex:none; }

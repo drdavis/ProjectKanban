@@ -1,3 +1,4 @@
+import {workFields} from "./collaboration.ts";
 import { z } from "zod";
 import { briefFields, bugFields, executionFields } from "./card-quality.ts";
 import { releaseFields } from "./roadmap.ts";
@@ -30,6 +31,7 @@ const bugPatch = z.object({
   fixedIn: bugFields.shape.fixedIn.removeDefault().optional(),
   duplicateOf: bugFields.shape.duplicateOf.removeDefault().optional(),
 }).strict();
+const workPatch=z.object({client:workFields.shape.client.removeDefault().optional(),agency:workFields.shape.agency.removeDefault().optional(),assigneeId:workFields.shape.assigneeId.removeDefault().optional(),dueDate:workFields.shape.dueDate.removeDefault().optional(),checklist:workFields.shape.checklist.removeDefault().optional(),recurrenceDays:workFields.shape.recurrenceDays.removeDefault().optional(),cycle:workFields.shape.cycle.removeDefault().optional(),outcome:workFields.shape.outcome.removeDefault().optional(),impact:workFields.shape.impact.removeDefault().optional(),effort:workFields.shape.effort.removeDefault().optional(),source:workFields.shape.source.removeDefault().optional()}).strict();
 const executionPatch = z.object({
   planningRequired: executionFields.shape.planningRequired.removeDefault().optional(),
   approach: executionFields.shape.approach.removeDefault().optional(),
@@ -40,7 +42,7 @@ const executionPatch = z.object({
   result: executionFields.shape.result.removeDefault().optional(),
   evidence: executionFields.shape.evidence.removeDefault().optional(),
   attachmentSummary: executionFields.shape.attachmentSummary.unwrap().removeDefault().optional(),
-  work: executionFields.shape.work,
+  work: workPatch.optional(),
   parentId: executionFields.shape.parentId,
   brief: briefPatch.optional(), bug: bugPatch.optional(),
 }).strict();

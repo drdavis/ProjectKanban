@@ -1,6 +1,6 @@
 # ProjectKanban: proposed roadmap informed by Linear
 
-Research date: November 24, 2026. Status: proposal, not a committed delivery schedule.
+Research date: November 24, 2026. Status: approved for implementation. Core features in all five releases are implemented; live collaborator and external integration acceptance remains open. See [delivery status](roadmap-delivery.md) for evidence and activation requirements.
 
 ## Positioning
 
@@ -39,6 +39,8 @@ Priority P0; prerequisite for broader use.
 Exit: a collaborator sees only their authorized board, updates a task, and cannot read an unshared card or attachment. Two coding clients reconnect and update the intended product without overwriting each other. Software closure gates still apply.
 
 ## Release 2: daily work for people
+
+November 24 extension: client and agency fields, grouped client/agency/all-task layouts, customizable column labels, bulk classification, saved client views, and CSV client/agency mapping and export. Task boards suppress development/bug tabs and software delivery settings.
 
 Priority P1; depends on account identity and membership from Release 1.
 

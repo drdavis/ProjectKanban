@@ -24,3 +24,17 @@ Confirm the intended account identity before granting access. Test with that per
 ## AI assistants
 
 A token must be scoped to the intended product with write access. Read `get_product` first: `qualityPolicy.workType` declares the card mode. Use `title`, `description` (Notes), `responsible` (Assignee), and `execution.attachmentSummary`. Create, update, and move tasks through MCP without inventing test results. Tokens for another product cannot assign work on this board.
+
+## Client and agency work
+
+Create a board with **Client and agency tasks**, or open an existing board's **Configure → Work type and software policy**, select **Human tasks**, and save. Changing mode preserves existing cards and imported history. Existing boards are not switched based on their names.
+
+Task boards start with **By client**, with optional **By agency**, **All tasks**, and **Status columns** layouts. Each task has Client and Agency fields with suggestions from that board. The agency selector narrows the client list. Use **Show completed** for imported historical work. Select tasks to set client/agency together; blank fields in that batch operation clear the old classification.
+
+Owners can customize the task tab title, client/agency field labels, agency visibility, default layout, and five column labels under **Configure → Customize task board**. The underlying states remain compatible with MCP: Backlog (To do), Ready (Scheduled), In Progress, Review (Awaiting approval), Done. Renaming never invents completion evidence.
+
+Each member can save personal client/agency views to their account. Membership controls access to the entire board; these filters do not provide client-level security. Put clients requiring different access in separate boards.
+
+CSV imports map Client / Customer and Agency columns. Exports include both fields. Existing records with only client names buried in notes remain unclassified until reviewed; original notes are retained.
+
+MCP partial updates can set `execution.work.client` and `execution.work.agency` without clearing due dates or checklists. Account assignment remains `execution.work.assigneeId`, restricted to members of that board.
