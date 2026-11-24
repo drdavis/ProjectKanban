@@ -1,9 +1,10 @@
+import type {InvitationDelivery} from './invitation-delivery';
 import {and,desc,eq,sql} from 'drizzle-orm';
 import {createHash,randomBytes} from 'node:crypto';
 import {activity,products,productMembers} from './schema';
 import {database} from './db';
 import type {Transaction} from './product-access';
-export type Invitation={email:string;role:'editor'|'viewer';digest:string;expiresAt:string;state:'pending'|'accepted'|'revoked';name:string};
+export type Invitation={delivery?:InvitationDelivery;email:string;role:'editor'|'viewer';digest:string;expiresAt:string;state:'pending'|'accepted'|'revoked';name:string};
 export const inviteDigest=(token:string)=>createHash('sha256').update(token).digest('hex');
 export const inviteToken=()=>randomBytes(32).toString('base64url');
 export function invitationMatches(invite:Invitation,email:string,now=Date.now()){return invite.state==='pending'&&Date.parse(invite.expiresAt)>now&&invite.email===email.trim().toLowerCase();}

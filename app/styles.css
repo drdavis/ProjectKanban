@@ -240,3 +240,8 @@ input,select,textarea {background:var(--surface);}
 .task-row-title small { display:block; margin-top:5px; color:#586272; }
 .task-row > select { width:auto; max-width:220px; }
 .task-row > input[type=checkbox] { width:18px; flex:none; }
+
+.invitation-result { margin:20px 0; padding:18px; border:2px solid #b7791f; border-radius:12px; background:#fff8e8; color:#583b10; }
+.invitation-result.success { border-color:#178057; background:#edf9f2; color:#174f35; }
+.invitation-result > strong { font-size:1.1rem; }
+.invitation-history { padding:16px 0; border-bottom:1px solid #d9dee6; }

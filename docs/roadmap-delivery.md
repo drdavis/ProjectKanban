@@ -64,3 +64,11 @@ The roadmap's code implementation is distinct from acceptance: a real Kris login
 Client-task verification: 62 automated tests passed, including rendered human-view labels, partial MCP metadata preservation, client/agency grouping, CSV mapping, atomic batch rollback, board isolation, owner-only customization, and archived-work exclusion. Production build passed. Interactive signed-in browser acceptance remains unverified.
 
 Deployment `a7d7ae4` reached Ready and was aliased to https://projectkanban-omega.vercel.app. All 31 public HTTP acceptance checks passed after deployment. These verify availability and unauthenticated access rejection, not Kris’s signed-in workflow.
+
+## Invitation feedback and PK favicon
+
+Invitation sending now shows a prominent recipient-specific result and stores the send status, timestamp, and Resend message ID for later inspection. Link-only, rejected, and uncertain sends are distinct from provider-accepted sends. Acceptance of the board invitation is displayed separately. Older invitations have no retrospective send receipt and are labeled accordingly. Resend acceptance is not proof of inbox delivery; delivery/bounce details remain in Resend Emails.
+
+Email is selected by default when configured, with explicit Send invitation email / Create link only buttons and in-flight duplicate-click protection. The favicon uses a navy PK monogram with a mint K.
+
+Verification: 65 tests passed, including mocked provider acceptance/rejection/connection failure, persistent receipt reads, owner-only history, and preserving concurrent invitation acceptance. Production build passed. No real invitation was sent during these tests.

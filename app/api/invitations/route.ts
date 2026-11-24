@@ -1,3 +1,4 @@
+import {sendInvitationEmail} from '../../../lib/invitation-delivery';
 import {auth} from '../../../lib/auth';
 import {database} from '../../../lib/db';
 import {activity} from '../../../lib/schema';
@@ -27,12 +28,17 @@ export async function POST(request:Request){const {userId}=await auth();if(!user
    if(!row)throw new RequestError('Invitation not found.',404);
    await tx.update(activity).set({after:{...row.after as object,state:'revoked'}}).where(eq(activity.id,row.id));return {ok:true};
   }
-  const token=inviteToken();const fields:Invitation={email:command.email.trim().toLowerCase(),name:command.name,role:command.role,digest:inviteDigest(token),expiresAt:new Date(Date.now()+7*86400000).toISOString(),state:'pending'};
-  await tx.insert(activity).values({createdAt:sql`clock_timestamp()`,productId:product.id,actor:userId,action:'Private invitation',after:fields});
-  return {url:new URL('/invite#'+token,new URL(request.url).origin).toString(),expiresAt:fields.expiresAt,productName:product.name};
+  const token=inviteToken();const fields:Invitation={email:command.email.trim().toLowerCase(),name:command.name,role:command.role,digest:inviteDigest(token),expiresAt:new Date(Date.now()+7*86400000).toISOString(),state:'pending',delivery:{status:command.sendEmail?'sending':'not-requested',at:new Date().toISOString()}};
+  const [invitation]=await tx.insert(activity).values({createdAt:sql`clock_timestamp()`,productId:product.id,actor:userId,action:'Private invitation',after:fields}).returning({id:activity.id});
+  return {invitationId:invitation.id,email:fields.email,delivery:fields.delivery,url:new URL('/invite#'+token,new URL(request.url).origin).toString(),expiresAt:fields.expiresAt,productName:product.name};
  });
- if(command.action==='invite'&&command.sendEmail&&'url' in result){
-  try{const sent=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.INVITATION_FROM_EMAIL,to:[command.email],subject:'Invitation to '+result.productName,text:'You have been invited to '+result.productName+' in ProjectKanban. Use your invited email address to join: '+result.url+'\nThis link expires in seven days.'}),signal:AbortSignal.timeout(10000)});return Response.json({...result,emailSent:sent.ok,...(!sent.ok?{warning:'The invitation was created, but email delivery failed. Copy and share the link.'}:{})});}catch{return Response.json({...result,emailSent:false,warning:'The invitation was created, but email delivery failed. Copy and share the link.'});}
+ if(command.action==='invite'&&command.sendEmail&&result.url&&result.email&&result.productName&&result.invitationId){
+  const delivery=await sendInvitationEmail({email:result.email,productName:result.productName,url:result.url,invitationId:result.invitationId});
+  try{
+   // Merge only delivery metadata: acceptance or revocation may have changed meanwhile.
+   await database().update(activity).set({after:sql`jsonb_set(${activity.after}, '{delivery}', ${JSON.stringify(delivery)}::jsonb)`}).where(and(eq(activity.id,result.invitationId),eq(activity.productId,command.productId),eq(activity.action,'Private invitation')));
+   return Response.json({...result,delivery,emailSent:delivery.status==='sent'});
+  }catch{return Response.json({...result,delivery,emailSent:delivery.status==='sent',warning:'The current email result could not be saved to invitation history. Keep this confirmation and check Resend logs before sending again.'});}
  }
  return Response.json(result);
 }catch(e){return Response.json({error:e instanceof RequestError?e.message:'Check the invitation details.'},{status:e instanceof RequestError?e.status:400});}}

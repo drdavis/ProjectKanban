@@ -11,7 +11,7 @@ let pg,db,api,temp;
 before(async()=>{
  temp=await mkdtemp(join(process.cwd(),'.test-collaboration-'));
  const entry=join(temp,'entry.ts');
- await writeFile(entry,`export * from '../lib/schema';export {saveCard} from '../lib/card-write';export {collaborate,latestEvent} from '../lib/collaboration-store';export {productAccess} from '../lib/product-access';export {drizzle} from 'drizzle-orm/pglite';export {eq} from 'drizzle-orm';export {GET as myWorkGET} from '../app/api/my-work/route';export {GET as collaborationGET,POST as collaborationPOST} from '../app/api/collaboration/route';export {GET as preferenceGET,POST as preferencePOST} from '../app/api/preferences/route';export {GET as portfolioGET} from '../app/api/portfolio/route';export {GET as exportGET} from '../app/api/export/route';export {GET as kanbanGET, POST as kanbanPOST} from '../app/api/kanban/route';export {POST as workspaceMCP} from '../app/api/mcp/workspace/route';export {createMcpToken} from '../lib/mcp-token';export {POST as hookPOST} from '../app/api/hooks/[provider]/route';export {encryptApiKey} from '../lib/provider-secrets';export {validInvitation,acceptInvitations,inviteDigest} from '../lib/invitations';`);
+ await writeFile(entry,`export * from '../lib/schema';export {GET as invitationsGET,POST as invitationsPOST} from '../app/api/invitations/route';export {saveCard} from '../lib/card-write';export {collaborate,latestEvent} from '../lib/collaboration-store';export {productAccess} from '../lib/product-access';export {drizzle} from 'drizzle-orm/pglite';export {eq} from 'drizzle-orm';export {GET as myWorkGET} from '../app/api/my-work/route';export {GET as collaborationGET,POST as collaborationPOST} from '../app/api/collaboration/route';export {GET as preferenceGET,POST as preferencePOST} from '../app/api/preferences/route';export {GET as portfolioGET} from '../app/api/portfolio/route';export {GET as exportGET} from '../app/api/export/route';export {GET as kanbanGET, POST as kanbanPOST} from '../app/api/kanban/route';export {POST as workspaceMCP} from '../app/api/mcp/workspace/route';export {createMcpToken} from '../lib/mcp-token';export {POST as hookPOST} from '../app/api/hooks/[provider]/route';export {encryptApiKey} from '../lib/provider-secrets';export {validInvitation,acceptInvitations,inviteDigest} from '../lib/invitations';`);
  const output=join(temp,'compiled.mjs');
  await build({entryPoints:[entry],outfile:output,bundle:true,platform:'node',format:'esm',packages:'external',logLevel:'silent',plugins:[{name:'test-boundaries',setup(b){b.onLoad({filter:/[\/]lib[\/]auth\.ts$/},()=>({contents:'export async function auth(){return {userId:globalThis.__kanbanUser??null}}',loader:'ts'}));b.onLoad({filter:/[\/]lib[\/]db\.ts$/},()=>({contents:'export function database(){return globalThis.__kanbanDb}',loader:'ts'}));}}]});
  api=await import(pathToFileURL(output));pg=new PGlite();db=api.drizzle(pg,{casing:'snake_case'});globalThis.__kanbanDb=db;
@@ -166,4 +166,35 @@ test('portfolio exposes client context only within member scope and excludes arc
  await command(p,'owner','owner',{action:'archive',archived:true},1);
  data=await (await api.portfolioGET()).json();assert.equal(data.items.some(x=>x.cardId===c.id),false);
  assert.equal((await (await api.myWorkGET()).json()).items.some(x=>x.id===c.id),false);
+});
+
+test('invitation receipt persists across refresh and distinguishes email submission from acceptance',async()=>{
+ const p=await fixture();globalThis.__kanbanUser='owner';const originalFetch=globalThis.fetch;
+ process.env.RESEND_API_KEY='fixture-not-a-real-key';process.env.INVITATION_FROM_EMAIL='Board <invite@example.test>';
+ let calls=0;
+ globalThis.fetch=async(url,options)=>{calls++;assert.equal(url,'https://api.resend.com/emails');const body=JSON.parse(options.body);assert.equal(body.to[0],'invitee@example.test');assert.ok(body.text.includes('/invite#'));return Response.json({id:'email-receipt-1'});};
+ try{
+  const response=await api.invitationsPOST(req('/api/invitations',{action:'invite',productId:p.id,email:'invitee@example.test',name:'Invitee',role:'editor',sendEmail:true}));assert.equal(response.status,200);const sent=await response.json();assert.equal(sent.delivery.status,'sent');assert.equal(calls,1);
+  const rows=await (await api.invitationsGET(req('/api/invitations?product='+p.id))).json();assert.equal(rows[0].delivery.messageId,'email-receipt-1');assert.equal(rows[0].state,'pending');assert.equal(rows[0].digest,undefined);
+  globalThis.__kanbanUser='editor';assert.equal((await api.invitationsGET(req('/api/invitations?product='+p.id))).status,403);
+ }finally{globalThis.fetch=originalFetch;delete process.env.RESEND_API_KEY;delete process.env.INVITATION_FROM_EMAIL;}
+});
+test('link-only invitation never sends and rejected emails retain explicit failure history',async()=>{
+ const p=await fixture();globalThis.__kanbanUser='owner';const originalFetch=globalThis.fetch;let calls=0;
+ globalThis.fetch=async()=>{calls++;return new Response('{}',{status:403});};
+ try{
+  let response=await api.invitationsPOST(req('/api/invitations',{action:'invite',productId:p.id,email:'invitee@example.test',name:'Invitee',role:'editor',sendEmail:false}));assert.equal((await response.json()).delivery.status,'not-requested');assert.equal(calls,0);
+  process.env.RESEND_API_KEY='fixture-not-a-real-key';process.env.INVITATION_FROM_EMAIL='Board <invite@example.test>';
+  response=await api.invitationsPOST(req('/api/invitations',{action:'invite',productId:p.id,email:'invitee@example.test',name:'Invitee',role:'editor',sendEmail:true}));const failed=await response.json();assert.equal(failed.emailSent,false);assert.equal(failed.delivery.status,'failed');assert.ok(failed.delivery.reason.includes('sender'));assert.ok(failed.url);
+  const rows=await (await api.invitationsGET(req('/api/invitations?product='+p.id))).json();assert.equal(rows[0].delivery.status,'failed');
+ }finally{globalThis.fetch=originalFetch;delete process.env.RESEND_API_KEY;delete process.env.INVITATION_FROM_EMAIL;}
+});
+test('uncertain email outcome does not claim failure or overwrite concurrent invitation acceptance',async()=>{
+ const p=await fixture();globalThis.__kanbanUser='owner';const originalFetch=globalThis.fetch;
+ process.env.RESEND_API_KEY='fixture-not-a-real-key';process.env.INVITATION_FROM_EMAIL='Board <invite@example.test>';
+ globalThis.fetch=async()=>{await api.acceptInvitations({id:'new-invitee',email:'concurrent@example.test',emailVerified:true});throw new Error('Connection interrupted');};
+ try{
+  const response=await api.invitationsPOST(req('/api/invitations',{action:'invite',productId:p.id,email:'concurrent@example.test',name:'Invitee',role:'editor',sendEmail:true}));assert.equal((await response.json()).delivery.status,'unknown');
+  const rows=await (await api.invitationsGET(req('/api/invitations?product='+p.id))).json();assert.equal(rows[0].state,'accepted');assert.equal(rows[0].delivery.status,'unknown');
+ }finally{globalThis.fetch=originalFetch;delete process.env.RESEND_API_KEY;delete process.env.INVITATION_FROM_EMAIL;}
 });
