@@ -1,5 +1,6 @@
 import { z } from "zod";
 export const qualityPolicyFields=z.object({
+  workType:z.enum(["software","tasks"]).default("software"),
   requireStructuredBrief:z.boolean().default(true),
   requireBugDetails:z.boolean().default(true),
   allowOwnerExceptions:z.boolean().default(false),

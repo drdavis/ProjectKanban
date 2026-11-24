@@ -16,9 +16,11 @@ export class RequestError extends Error {
 
 export async function saveCard(tx: Transaction, productId: string, actor: string, input: z.input<typeof cardFields>, cardId?: string, beforeId?: string | null, exception?: {reason:string}) {
   const fields = cardFields.parse(input);
+  const policy = await readQualityPolicy(tx,productId);
+  const humanTask = policy.workType === "tasks" && fields.kind === "development";
   const legal = workflows[fields.kind];
   if (!legal.includes(fields.status)) throw new RequestError("Choose a status on the destination board.");
-  if (["Done", "Closed"].includes(fields.status) && !fields.criteria) {
+  if (["Done", "Closed"].includes(fields.status) && !humanTask && !fields.criteria) {
     throw new RequestError("Record acceptance or verification evidence before closing this card.");
   }
   const all = await tx.select().from(cards).where(eq(cards.productId, productId)).orderBy(asc(cards.position));
@@ -38,13 +40,12 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     if (fields.kind === "bug") execution.bug ??= bugFields.parse({});
     else execution.brief ??= briefFields.parse({});
   }
-  const policy = await readQualityPolicy(tx,productId);
   const missing = qualityIssues({...fields, execution}, fields.status, policy);
   const waived = missing.length > 0 && exceptionCanWaive(missing,policy,exception?.reason);
   if (missing.length && !waived) throw new RequestError("Before moving to " + fields.status + ", complete: " + missing.join(", ") + ".");
   const approved = execution.approved && (!!execution.approach && !!fields.criteria);
   const closed = ["Done", "Closed"];
-  const verified = (plan: typeof execution | null) => !plan?.verificationRequired ||
+  const verified = (plan: typeof execution | null, kind: string) => (policy.workType === "tasks" && kind === "development") || !plan?.verificationRequired ||
     (plan.result === "Passed" && !!plan.testPlan && !!plan.evidence);
   const prerequisites = new Map(all.map((card) => [card.id, card]));
   for (const related of [execution.parentId, execution.bug?.duplicateOf]) {
@@ -72,15 +73,15 @@ export async function saveCard(tx: Transaction, productId: string, actor: string
     pending.push(...(blocker.execution?.blockers ?? []));
   }
   if (!["Backlog", "Reported", "Triage"].includes(fields.status)) {
-    if (execution.planningRequired && !approved && !waived) throw new RequestError("Review the plan and acceptance criteria before advancing.");
+    if (!humanTask && execution.planningRequired && !approved && !waived) throw new RequestError("Review the plan and acceptance criteria before advancing.");
     for (const id of execution.blockers) {
       const blocker = prerequisites.get(id)!;
-      if (!closed.includes(blocker.status) || !verified(blocker.execution) || qualityIssues(blocker, blocker.status, policy).length) {
+      if (!closed.includes(blocker.status) || !verified(blocker.execution, blocker.kind) || qualityIssues(blocker, blocker.status, policy).length) {
         throw new RequestError("Waiting for " + blocker.title + " to close with any required verification.");
       }
     }
   }
-  if (closed.includes(fields.status) && !verified(execution)) {
+  if (closed.includes(fields.status) && !verified(execution, fields.kind)) {
     throw new RequestError("Add a test plan, passing result, and evidence before closing.");
   }
   const column = all.filter((card) => card.id !== cardId && card.kind === fields.kind && card.status === fields.status);

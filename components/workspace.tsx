@@ -1,5 +1,6 @@
 "use client";
 
+import { TaskForm } from "./task-form";
 import { CsvImport } from "./csv-import";
 import { phaseTint } from "../lib/phase-colors";
 import { defaultQualityPolicy, type QualityPolicy } from "../lib/quality-policy";
@@ -54,20 +55,20 @@ async function request<T>(productId?: string, command?: z.input<typeof mutation>
   return payload;
 }
 
-function IssueCard({card, open, disabled}: {card: Card; open: () => void; disabled: boolean}) {
+function IssueCard({card, open, disabled, taskMode}: {taskMode?: boolean; card: Card; open: () => void; disabled: boolean}) {
   const sortable = useSortable({id: card.id, data: {status: card.status}, disabled});
   return <article ref={sortable.setNodeRef} style={{transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition, background: `linear-gradient(145deg, #ffffffee, ${phaseTint(card.roadmapAssignment?.phase)})`}}
     data-state={["Done", "Closed"].includes(card.status) ? "done" : ["Review", "Verify"].includes(card.status) ? "review" : ["In Progress", "Fixing"].includes(card.status) ? "active" : "queued"} className={"issue" + (sortable.isDragging ? " dragging" : "")}>
     <div className="issue-top">
       <span className="issue-id">{card.id.slice(0, 7).toUpperCase()}</span>
       <div className="issue-indicators">
-        {card.execution?.planningRequired && <span className="issue-indicator" role="img" aria-label={card.execution.approved ? "Plan reviewed" : "Plan needs review"} title={card.execution.approved ? "Plan reviewed" : "Plan needs review"} data-tone={card.execution.approved ? "passed" : "plan"} tabIndex={0}>P</span>}
-        {card.execution?.verificationRequired && <span className="issue-indicator" role="img" aria-label={"Verification: " + card.execution.result} title={"Verification: " + card.execution.result} data-tone={card.execution.result.toLowerCase()} tabIndex={0}>T</span>}
+        {!taskMode && card.execution?.planningRequired && <span className="issue-indicator" role="img" aria-label={card.execution.approved ? "Plan reviewed" : "Plan needs review"} title={card.execution.approved ? "Plan reviewed" : "Plan needs review"} data-tone={card.execution.approved ? "passed" : "plan"} tabIndex={0}>P</span>}
+        {!taskMode && card.execution?.verificationRequired && <span className="issue-indicator" role="img" aria-label={"Verification: " + card.execution.result} title={"Verification: " + card.execution.result} data-tone={card.execution.result.toLowerCase()} tabIndex={0}>T</span>}
 
       </div>
       <button className="grip" {...sortable.attributes} {...sortable.listeners} aria-label={"Drag " + card.title}><GripVertical size={16}/></button>
     </div>
-    <div className="card-phase">{card.roadmapAssignment?.phase || "No phase"}{card.roadmapAssignment?.milestone && <span> · {card.roadmapAssignment.milestone}</span>}</div>
+    <div className="card-phase">{taskMode ? card.responsible || "Unassigned" : card.roadmapAssignment?.phase || "No phase"}{!taskMode && card.roadmapAssignment?.milestone && <span> · {card.roadmapAssignment.milestone}</span>}</div>
     <button className="issue-title" onClick={open}>{card.title}</button>
     {(card.priority !== "Normal" || card.severity || card.tags.length > 0) && <div className="tags">
       {card.priority !== "Normal" && <span data-priority={card.priority}>{card.priority} priority</span>}
@@ -77,12 +78,12 @@ function IssueCard({card, open, disabled}: {card: Card; open: () => void; disabl
   </article>;
 }
 
-function Column({status, cards, open, add, disabled}: {status: string; cards: Card[]; open: (card: Card) => void; add: () => void; disabled: boolean}) {
+function Column({status, cards, open, add, disabled, taskMode}: {taskMode?: boolean; status: string; cards: Card[]; open: (card: Card) => void; add: () => void; disabled: boolean}) {
   const drop = useDroppable({id: status, data: {status}, disabled});
   return <section className={"column" + (drop.isOver ? " over" : "")} ref={drop.setNodeRef}>
     <header><span className="status-dot" data-status={status}/><h2>{status}</h2><span className="count">{cards.length}</span><button aria-label={"Add card to " + status} disabled={disabled} onClick={add}><Plus size={16}/></button></header>
     <SortableContext items={cards.map((card) => card.id)} strategy={verticalListSortingStrategy}>
-      {cards.map((card) => <IssueCard key={card.id} card={card} open={() => open(card)} disabled={disabled}/>)}
+      {cards.map((card) => <IssueCard taskMode={taskMode} key={card.id} card={card} open={() => open(card)} disabled={disabled}/>)}
     </SortableContext>
     {cards.length === 0 && <button className="empty-column" disabled={disabled} onClick={add}>Add a card</button>}
   </section>;
@@ -111,6 +112,8 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   const [loading, setLoading] = useState(true);
   const locked = useRef(false);
   const product = snapshot?.product.id === selected ? snapshot.product : undefined;
+  const taskMode = snapshot?.policy?.workType === "tasks";
+  useEffect(() => { if (taskMode) { setBoard("development"); setPhase(""); } }, [taskMode]);
   const isOwner = snapshot?.role === "owner";
   const canEdit = isOwner || snapshot?.role === "editor";
   const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}));
@@ -215,15 +218,15 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
             <Button variant="outline" onClick={() => setPanel("settings")}>Configure</Button>
             {!preview && <Button variant="outline" onClick={() => setPanel("portfolio")}>Portfolio</Button>}
             <Button variant="outline" onClick={() => setPanel("history")}>Activity</Button>
-            {canEdit && <Button variant="outline" onClick={() => setPanel("planning")}>Plan product</Button>}
+            {canEdit && !taskMode && <Button variant="outline" onClick={() => setPanel("planning")}>Plan product</Button>}
             {isOwner && <Button variant="outline" onClick={() => setPanel("mcp")}>MCP access</Button>}
             {isOwner && <Button variant="outline" onClick={() => setPanel("members")}>Access</Button>}
             {isOwner && <Button variant="outline" onClick={() => {setPrompt(""); setIncludeRoadmap(false); setCardIds([]); setPlannerConnection(undefined); setPanel("ai");}}><Sparkles size={16}/> AI planner{selectedProposals.length > 0 && " · " + selectedProposals.length}</Button>}
         </div>
         <div className="toolbar workspace-board-bar">
           <nav aria-label="Boards">
-            <button aria-pressed={board === "development"} onClick={() => setBoard("development")}><Layers3 size={16}/> Development</button>
-            <button aria-pressed={board === "bug"} onClick={() => setBoard("bug")}><Bug size={16}/> Bug Fixes</button>
+            <button aria-pressed={board === "development"} onClick={() => setBoard("development")}><Layers3 size={16}/> {taskMode ? "Tasks" : "Development"}</button>
+            {!taskMode && <button aria-pressed={board === "bug"} onClick={() => setBoard("bug")}><Bug size={16}/> Bug Fixes</button>}
           </nav>
           <label><ListFilter size={16}/><input placeholder="Filter cards…" value={filter} onChange={(event) => setFilter(event.target.value)}/></label>
         </div>
@@ -238,22 +241,22 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
             </select>
           </label>)}
         </div>}
-        <div className="phase-legend" aria-label="Card background colors by phase"><strong>Phase colors</strong>
+        {!taskMode && <div className="phase-legend" aria-label="Card background colors by phase"><strong>Phase colors</strong>
           {[...new Set(product.releases.flatMap(release => release.phases).concat(snapshot!.cards.map(item => item.roadmapAssignment?.phase || "").filter(Boolean)))].map(name => <span key={name}><i aria-hidden="true" style={{background: phaseTint(name)}}/>{name}</span>)}
           <span><i aria-hidden="true" style={{background: phaseTint()}}/>No phase</span>
-        </div>
+        </div>}
         <div className="workspace-board-options">
-        <details className="board-legend"><summary>Board legend</summary><div>
+        {!taskMode && <details className="board-legend"><summary>Board legend</summary><div>
           <p><strong>Card background</strong> · Project phase (see Phase colors). Columns show workflow status; milestone names appear below the card ID.</p>
           <p><strong>P</strong> Planning · Blue: needs review · Green: reviewed</p>
           <p><strong>T</strong> Testing · Amber: pending · Green: passed · Red: failed</p>
-        </div></details>
+        </div></details>}
         {!preview && <SavedViews key={product.id} storageKey={"projectkanban-views:" + userId + ":" + product.id}
-          board={board} filter={filter} phase={phase} tag={tag} responsible={responsible} apply={(view) => {setBoard(view.board); setFilter(view.filter); setPhase(view.phase); setTag(view.tag); setResponsible(view.responsible);}}/>}
-        <ReleaseReadiness policy={snapshot?.policy} key={product.id} cards={snapshot!.cards} releases={product.releases} open={(issue) => openCard(issue.status, issue)}/>
+          board={board} filter={filter} phase={phase} tag={tag} responsible={responsible} apply={(view) => {setBoard(taskMode ? "development" : view.board); setFilter(view.filter); setPhase(taskMode ? "" : view.phase); setTag(view.tag); setResponsible(view.responsible);}}/>}
+        {!taskMode && <ReleaseReadiness policy={snapshot?.policy} key={product.id} cards={snapshot!.cards} releases={product.releases} open={(issue) => openCard(issue.status, issue)}/>}
         </div>
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={drag}>
-          <div className="board">{workflows[board].map((status) => <Column key={status} status={status}
+          <div className="board">{workflows[board].map((status) => <Column taskMode={taskMode} key={status} status={status}
             cards={issues.filter((item) => item.status === status)} disabled={busy || !canEdit || Boolean(filter || phase || tag || responsible)}
             open={(item) => openCard(status, item)} add={() => { if (canEdit) openCard(status); }}/>)}</div>
         </DndContext>
@@ -280,9 +283,9 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
       {panel === "csv" && product && isOwner && !preview && <CsvImport productId={product.id} revision={product.revision} onImported={async()=>setSnapshot(await request<Snapshot>(product.id))}/>}
       {panel === "settings" && product && <section className="history">
         {isOwner && !preview && <div><h3>Import tasks</h3><p>Bring tasks from an Airtable CSV export, including historical completed work.</p><Button variant="outline" onClick={() => setPanel("csv")}>Import CSV</Button></div>}
-        {!preview && <div><h3>AI provider</h3><p>Choose OpenRouter, OpenAI, Anthropic, or Vercel AI Gateway and save your own API key. Your provider connection applies to your account; external AI planning is enabled separately for each product.</p><Button variant="outline" onClick={() => setPanel("provider")}>Configure AI provider</Button></div>}
+        {!preview && (!taskMode || isOwner) && <div><h3>AI provider</h3><p>Choose OpenRouter, OpenAI, Anthropic, or Vercel AI Gateway and save your own API key. Your provider connection applies to your account; external AI planning is enabled separately for each product.</p><Button variant="outline" onClick={() => setPanel("provider")}>Configure AI provider</Button></div>}
         {!isOwner && <><h3>Current roadmap</h3><p style={{whiteSpace: "pre-wrap"}}>{product.roadmap || "No roadmap yet."}</p></>}
-        <h3>Releases</h3>
+        {!taskMode && <><h3>Releases</h3>
         {product.releases.map((release) => <article key={release.id}><strong>{release.name}</strong>
           <p>Phases · {release.phases.join(", ") || "None"}</p>
           <p>Milestones · {release.milestones.join(", ") || "None"}</p>
@@ -295,18 +298,20 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         {canEdit && <ReleaseForm busy={busy} commit={(fields) => save({
           action: "roadmap.release.save", productId: product.id, revision: product.revision, fields,
         }, false)}/>}
-        {isOwner && !preview && <form onSubmit={event=>{const values=form(event);save({action:"quality.policy",productId:product.id,revision:product.revision,fields:{requireStructuredBrief:values.has("requireStructuredBrief"),requireBugDetails:values.has("requireBugDetails"),allowOwnerExceptions:values.has("allowOwnerExceptions")}},false);}}>
-          <h3>Quality policy</h3><p>Passing tests and evidence are always required to close work. Changes and exceptions are recorded in history.</p>
+        </>}
+        {isOwner && !preview && <form onSubmit={event=>{const values=form(event);save({action:"quality.policy",productId:product.id,revision:product.revision,fields:{workType:values.get("workType") === "tasks" ? "tasks" : "software",requireStructuredBrief:values.has("requireStructuredBrief"),requireBugDetails:values.has("requireBugDetails"),allowOwnerExceptions:values.has("allowOwnerExceptions")}},false);}}>
+          <h3>Card style and quality policy</h3><label>Work type<select name="workType" defaultValue={snapshot?.policy?.workType ?? "software"}><option value="software">SaaS / software development</option><option value="tasks">Human tasks — simple cards</option></select></label><p>Human tasks use name, notes, assignee, status, attachments, and attachment summary. Marking Done records completion without software testing requirements. Software cards retain their planning and verification checks. Changes are recorded in history.</p>
           {([ ["requireStructuredBrief","Require structured development details before starting"], ["requireBugDetails","Require detailed reproduction information before fixing"], ["allowOwnerExceptions","Allow the owner to waive readiness fields with a written reason"] ] as const).map(([name,label])=><label className="checkbox" key={name}><input type="checkbox" name={name} defaultChecked={(snapshot?.policy??defaultQualityPolicy)[name]}/>{label}</label>)}
           <Button type="submit" disabled={busy}>Save quality policy</Button>
         </form>}
-        <h3>Roadmap history</h3>
+        {!taskMode && <><h3>Roadmap history</h3>
         <RoadmapComparison versions={snapshot!.roadmapVersions}/>
         {snapshot!.roadmapVersions.length === 0 && <p>No saved roadmap versions yet.</p>}
         {snapshot!.roadmapVersions.map((version, index) => <details key={version.id}>
           <summary>Version {snapshot!.roadmapVersions.length - index} · {new Date(version.createdAt).toLocaleString()}</summary>
           <p style={{whiteSpace: "pre-wrap"}}>{(version.after as {roadmap: string}).roadmap || "Empty roadmap"}</p>
-        </details>)}
+        </details>)}</>}
+        {taskMode && <p>Task cards use Name, Notes, Assignee, Status, Attachments, and Attachment Summary. Software planning fields are hidden.</p>}
       </section>}
       {panel === "import" && <form onSubmit={(event) => {
         const values = form(event).getAll("names");
@@ -317,7 +322,8 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         {candidates.map((name) => <label className="checkbox" key={name}><input name="names" type="checkbox" value={name} disabled={catalog.some((item) => item.name === name)}/>{name}</label>)}
         <Button type="submit" disabled={busy}>Add selected products</Button>
       </form>}
-      {panel === "card" && product && <form onSubmit={(event) => {
+      {panel === "card" && product && taskMode && kind === "development" && <TaskForm card={card} status={initialStatus} productId={product.id} canEdit={canEdit} busy={busy} preview={!!preview} save={fields => save({action:"card.save", productId:product.id, revision:product.revision, cardId:card?.id, fields})}/>}
+      {panel === "card" && product && (!taskMode || kind === "bug") && <form onSubmit={(event) => {
         const values = form(event);
         const fields = {
           ...Object.fromEntries(values),

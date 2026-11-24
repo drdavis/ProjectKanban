@@ -55,6 +55,7 @@ export function MemberPanel({productId}: {productId: string}) {
 
   return <section className="history">
     <h3>Product access</h3>
+    <p>Access applies only to this product. Members do not gain access to your other boards. Use a separate account for each person; the owner account can see all boards it owns.</p>
     <p>Grant access to an existing account by Neon Auth user ID. A viewer can read this product. An editor can also edit cards and plan releases.</p>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}

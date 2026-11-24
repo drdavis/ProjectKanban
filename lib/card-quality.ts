@@ -18,6 +18,7 @@ export const executionFields = z.object({
   blockers: z.array(z.uuid()).max(100).default([]),
   verificationRequired: z.boolean().default(false), testPlan: text,
   result: z.enum(["Pending", "Passed", "Failed"]).default("Pending"), evidence: text,
+  attachmentSummary: text.optional(),
   brief: briefFields.optional(), bug: bugFields.optional(), parentId: z.uuid().nullable().optional(),
 }).strict();
 export type Execution = z.output<typeof executionFields>;
@@ -26,6 +27,7 @@ export type QualityCard = {kind: string; status: string; criteria: string; descr
 // Unknowns are allowed at intake; readiness and completion use observable requirements.
 // Legacy descriptions remain intact. Structured requirements apply when a brief/report is adopted.
 export function qualityIssues(card: QualityCard, status = card.status, policy: QualityPolicy = defaultQualityPolicy): string[] {
+  if (policy.workType === "tasks" && card.kind === "development") return [];
   if (["Backlog", "Reported", "Triage"].includes(status)) return [];
   const issues: string[] = [];
   const plan = card.execution;

@@ -141,3 +141,7 @@ Source code is available under the MIT license. Deployments, user data and crede
 See [the recorded acceptance results](docs/release-verification.md) for executed checks and remaining sign-in/browser checks. `npm run test:http` runs public HTTP access-boundary checks against production, or against `PROJECTKANBAN_BASE_URL`.
 
 The lockfile fixes the tested dependency graph. Security overrides keep Neon Auth’s pinned Better Auth and Zod dependencies on patched versions. Review these overrides when upgrading Neon Auth; do not remove them without rerunning the audit and authentication checks.
+
+### Human task boards
+
+Choose a per-product human-task card style for operations work, with Name, Notes, Assignee, Status, Attachments, and Attachment Summary. SaaS products retain their software verification workflow. See [human tasks and board access](docs/human-tasks.md).

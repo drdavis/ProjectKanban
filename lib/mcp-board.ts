@@ -84,10 +84,11 @@ export async function handleBoardMcp(request: Request, access: {productId: strin
     async getProduct() {
       const [product]=await db.select().from(products).where(owned);
       if (!product) return {error:"Product not found."};
+      const qualityPolicy = await db.transaction(tx=>readQualityPolicy(tx,access.productId));
       return {id:product.id,name:product.name,roadmap:product.roadmap,releases:product.releases,repository:product.repository,
         revision:product.revision,workflowVersion,permissions:{read:true,write:access.canWrite,roadmap:!!access.canPlan},
-        qualityPolicy:await db.transaction(tx=>readQualityPolicy(tx,access.productId)),
-        policy:"Incomplete cards can remain at intake. Advancing requires acceptance criteria and a test plan; structured briefs/reports have additional requirements. Closing requires passing evidence. Prerequisites must be verified. No automatic overrides."};
+        qualityPolicy,
+        policy:qualityPolicy.workType === "tasks" ? "Human task cards use title, description (notes), responsible (assignee), status, and execution.attachmentSummary. Mark Done when the human reports completion; do not invent passing test results. Dependencies must still be complete. Bug cards retain software checks." : "Incomplete cards can remain at intake. Advancing requires acceptance criteria and a test plan; structured briefs/reports have additional requirements. Closing requires passing evidence. Prerequisites must be verified. No automatic overrides."};
     },
     async listCards({board,status,offset,limit}) {
       const items=await db.select({id:cards.id,title:cards.title,board:cards.kind,status:cards.status,priority:cards.priority,severity:cards.severity})

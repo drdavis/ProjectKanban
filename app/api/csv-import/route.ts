@@ -28,7 +28,7 @@ export async function POST(request:Request){
         const fingerprint=createHash('sha256').update(rowIdentity(row.source)).digest('hex');
         if(known.has(fingerprint)){duplicates++;continue;}known.add(fingerprint);fingerprints.push(fingerprint);position+=1024;
         const provenance=`Imported from ${input.filename}, row ${row.row}. Original status: ${row.originalStatus||'(blank)'}. ${row.status==='Done'?'Historical completion reported by the source; not independently verified in ProjectKanban.':'Imported to Backlog for review.'}`;
-        values.push({productId:product.id,kind:'development',status:row.status,title:row.title,description:row.description,responsible:row.responsible,position,tags:['csv-import',...(row.status==='Done'?['historical-done']:[])],execution:executionFields.parse({verificationRequired:true,result:'Pending',evidence:provenance})});
+        values.push({productId:product.id,kind:'development',status:row.status,title:row.title,description:row.description,responsible:row.responsible,position,tags:['csv-import',...(row.status==='Done'?['historical-done']:[])],execution:executionFields.parse({verificationRequired:true,result:'Pending',evidence:provenance,attachmentSummary:row.source[input.mapping.summary]??''})});
       }
       if(values.length){
         // Owner-confirmed migration only. Never mark imported history as a passed test.
