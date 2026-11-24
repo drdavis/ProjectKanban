@@ -39,7 +39,7 @@ Webhook secrets use the existing server credential-encryption key, with product/
 
 ## Verification
 
-November 24 local run: 54 automated tests passed; production build passed. Local public HTTP checks passed 30/31; the unknown-token database lookup could not run against the unavailable local database connection. Production HTTP results are recorded separately after deployment.
+November 24 local run: 54 automated tests passed; production build passed. Local public HTTP checks passed 30/31; the unknown-token database lookup could not run against the unavailable local database connection. Production deployment `453acbc` reached Ready on Vercel; all 31 public HTTP checks passed against https://projectkanban-omega.vercel.app, including invalid-token rejection, private-route authentication, blocked public signup, and MCP origin protection. These checks do not use an authenticated collaborator session.
 
 Local tests use PGlite/Postgres with the real Drizzle schema, mutation code and HTTP route handlers. Authentication is stubbed at the session boundary in these tests, so they prove authorization and persistence rules, not a live identity-provider login.
 
