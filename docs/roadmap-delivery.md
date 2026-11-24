@@ -62,3 +62,5 @@ Activation for the existing Kris board is not confirmed. This session's MCP conn
 The roadmap's code implementation is distinct from acceptance: a real Kris login, two real coding clients and externally configured signed webhooks remain open verification gates.
 
 Client-task verification: 62 automated tests passed, including rendered human-view labels, partial MCP metadata preservation, client/agency grouping, CSV mapping, atomic batch rollback, board isolation, owner-only customization, and archived-work exclusion. Production build passed. Interactive signed-in browser acceptance remains unverified.
+
+Deployment `a7d7ae4` reached Ready and was aliased to https://projectkanban-omega.vercel.app. All 31 public HTTP acceptance checks passed after deployment. These verify availability and unauthenticated access rejection, not Kris’s signed-in workflow.
