@@ -1,13 +1,24 @@
 'use client';
-import {useEffect,useState,useRef} from 'react';
+import {useEffect,useState,useRef,type ReactNode} from 'react';
+import {DndContext,closestCorners,KeyboardSensor,PointerSensor,useDraggable,useDroppable,useSensor,useSensors} from '@dnd-kit/core';
 import type {cards} from '../lib/schema';
 import {taskGroups,taskStatusLabel,type TaskBoard} from '../lib/task-board';
 import {workflows} from '../lib/workflow';
 import {SavedViews} from './saved-views';
 import {Button} from './ui/button';
 type Card=typeof cards.$inferSelect;
+function TaskDrag({card,disabled,children}:{card:Card;disabled:boolean;children:ReactNode}){
+ const drag=useDraggable({id:card.id,disabled});
+ return <div ref={drag.setNodeRef} style={drag.transform?{transform:`translate3d(${drag.transform.x}px, ${drag.transform.y}px, 0)`,position:'relative',zIndex:10}:undefined}>
+ <button type="button" className="task-drag-handle" aria-label={'Move '+card.title} disabled={disabled} {...drag.listeners} {...drag.attributes}>⠿ <span>Drag to move</span></button>{children}</div>;
+}
+function TaskColumn({status,label,children}:{status:string;label:string;children:ReactNode}){
+ const drop=useDroppable({id:status});
+ return <section ref={drop.setNodeRef} className={'column'+(drop.isOver?' task-drop-active':'')} aria-label={label+' column'}><h3>{label}</h3>{children}</section>;
+}
 export function TaskWorkspace({cards,config,productId,userId,canEdit,busy,open,move,assign,quickAdd,bulk,classify,preview}:{cards:Card[];config:TaskBoard;productId:string;userId:string;canEdit:boolean;busy:boolean;preview:boolean;open:(card?:Card,status?:string)=>void;move:(card:Card,status:string)=>Promise<void>;assign:(card:Card,assigneeId:string)=>Promise<void>;quickAdd:(title:string,client:string,agency:string)=>Promise<void>;classify:(ids:string[],client:string,agency:string)=>Promise<void>;bulk:(ids:string[],status:string)=>Promise<void>}){
  const [client,setClient]=useState(''),[agency,setAgency]=useState(''),[query,setQuery]=useState(''),[view,setView]=useState(config.defaultView),[showDone,setShowDone]=useState(false),[loaded,setLoaded]=useState(false),[ids,setIds]=useState<string[]>([]),[status,setStatus]=useState('Backlog'),[batchClient,setBatchClient]=useState(''),[batchAgency,setBatchAgency]=useState(''),[title,setTitle]=useState(''),[error,setError]=useState('');
+ const sensors=useSensors(useSensor(PointerSensor,{activationConstraint:{distance:6}}),useSensor(KeyboardSensor));
  const lock=useRef(false);const [saving,setSaving]=useState(false);
  const [people,setPeople]=useState<Record<string,string>>({}),[members,setMembers]=useState<string[]>([]);
  const key='projectkanban:task-view:'+userId+':'+productId;
@@ -32,7 +43,7 @@ export function TaskWorkspace({cards,config,productId,userId,canEdit,busy,open,m
  {canEdit&&<form className="actions" onSubmit={e=>{e.preventDefault();void act(async()=>{await quickAdd(title,client,agency);setTitle('');});}}><label>New task<input required maxLength={180} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to get done?"/></label><Button type="submit" disabled={saving||busy||preview||!title.trim()}>Quick add</Button><p>Uses the selected client and agency. Open a task to set or change them.</p></form>}
  {canEdit&&ids.length>0&&<div className="actions"><label>Move {ids.length} selected<select value={status} onChange={e=>setStatus(e.target.value)}>{workflows.development.map(s=><option key={s} value={s}>{taskStatusLabel(s,config)}</option>)}</select></label><Button disabled={saving||busy} onClick={()=>void act(async()=>{await bulk(ids,status);setIds([]);})}>Apply status</Button><label>{config.clientLabel}<input value={batchClient} maxLength={120} onChange={e=>setBatchClient(e.target.value)}/></label>{config.showAgency&&<label>{config.agencyLabel}<input value={batchAgency} maxLength={120} onChange={e=>setBatchAgency(e.target.value)}/></label>}<Button disabled={saving||busy||(!batchClient.trim()&&!batchAgency.trim())} onClick={()=>void act(async()=>{await classify(ids,batchClient,batchAgency);setIds([]);})}>Set client and agency</Button><small>Replaces these fields on selected tasks; blank fields clear their existing value.</small></div>}
  {error&&<p role="alert">{error}</p>}
- {view==='status'?<div className="board">{workflows.development.map(s=><section className="column" key={s}><h3>{taskStatusLabel(s,config)}</h3>{visible.filter(c=>c.status===s).map(row)}{canEdit&&<Button variant="ghost" onClick={()=>open(undefined,s)}>Add task</Button>}</section>)}</div>:taskGroups(visible,view).map(group=><section className="task-group" key={JSON.stringify([group.agency,group.client])}>{view!=='list'&&<h3>{view==='clients'?(group.client||'No client assigned'):(group.agency||'No agency assigned')}{view==='clients'&&config.showAgency&&group.agency&&<small> · {group.agency}</small>} <span className="count">{group.items.length}</span></h3>}{group.items.map(row)}</section>)}
+ {view==='status'?<DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={({active,over})=>{if(!over||!canEdit||preview||saving||busy)return;const card=visible.find(c=>c.id===active.id),destination=String(over.id);if(card&&card.status!==destination&&workflows.development.includes(destination as typeof workflows.development[number]))void act(()=>move(card,destination));}}><div className="board">{workflows.development.map(s=><TaskColumn key={s} status={s} label={taskStatusLabel(s,config)}>{visible.filter(c=>c.status===s).map(c=><TaskDrag key={c.id} card={c} disabled={!canEdit||preview||saving||busy}>{row(c)}</TaskDrag>)}{canEdit&&<Button variant="ghost" onClick={()=>open(undefined,s)}>Add task</Button>}</TaskColumn>)}</div></DndContext>:taskGroups(visible,view).map(group=><section className="task-group" key={JSON.stringify([group.agency,group.client])}>{view!=='list'&&<h3>{view==='clients'?(group.client||'No client assigned'):(group.agency||'No agency assigned')}{view==='clients'&&config.showAgency&&group.agency&&<small> · {group.agency}</small>} <span className="count">{group.items.length}</span></h3>}{group.items.map(row)}</section>)}
  {!visible.length&&<p>No tasks match this view. {cards.some(c=>['Done','Closed'].includes(c.status))?'Turn on Show completed to see historical work.':'Add a task to get started.'}</p>}
  </section>;
 }

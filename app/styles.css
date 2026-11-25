@@ -276,3 +276,8 @@ input,select,textarea {background:var(--surface);}
 .auth-preview { display:block; text-align:center; font-size:12px; margin-top:28px; }
 .auth-footnote { color:#728276; font-size:12px; margin-top:24px; }
 @media(max-width:520px) { .auth-page { justify-content:flex-start; padding:28px 14px; } .auth-card { padding:26px 22px; } }
+
+.task-drag-handle { display:flex; align-items:center; gap:6px; width:100%; padding:6px 12px; border:0; background:transparent; color:#496454; font-size:12px; cursor:grab; touch-action:none; text-align:left; }
+.task-drag-handle:active { cursor:grabbing; }
+.task-drag-handle:disabled { cursor:default; opacity:.5; }
+.task-drop-active { outline:2px solid #427455; outline-offset:-2px; background:#e0eee5; }
