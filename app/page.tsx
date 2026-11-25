@@ -9,11 +9,14 @@ function Welcome({children}: {children: React.ReactNode}) {
   return <AuthShell>{children}<a className="auth-preview" href="/preview">Explore the sample workspace →</a></AuthShell>;
 }
 
-export default async function Page() {
+export default async function Page({searchParams}: {searchParams: Promise<{token?:string;error?:string}>}) {
   await connection();
   if (!neonAuth()) {
     return <Welcome><p>Configure Neon Auth to sign in to ProjectKanban.</p></Welcome>;
   }
+  const query = await searchParams;
+  if (query.token) return <Welcome><h1>Set your password</h1><p>Choose a new password, then sign in to continue.</p><NeonSignIn/></Welcome>;
+  if (query.error) return <Welcome><h1>Request a new setup link</h1><p>This password setup link is invalid or expired. Use Set or reset password below.</p><NeonSignIn/></Welcome>;
   const {userId} = await auth();
   const session = !userId ? await neonAuth()!.getSession() : null;
   if (!userId && session?.data?.user) {

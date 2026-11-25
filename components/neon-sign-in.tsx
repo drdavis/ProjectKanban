@@ -39,7 +39,7 @@ export function NeonSignIn({initialEmail = ""}: {initialEmail?: string}) {
     finally {setBusy(false);}
   }}>
     {mode !== "reset" && <label>Email<input name="email" defaultValue={initialEmail} type="email" autoComplete="username" required/></label>}
-    {mode !== "request" && <label>Password<input name="password" type="password" autoComplete={mode === "reset" ? "new-password" : "current-password"} minLength={mode === "reset" ? 8 : undefined} required/></label>}
+    {mode !== "request" && <label>Password<input name="password" type="password" autoComplete={mode === "reset" ? "new-password" : "current-password"} minLength={mode === "reset" ? 12 : undefined} required/></label>}
     <button className="primary" disabled={busy}>{mode === "reset" ? "Set password" : mode === "request" ? "Send setup link" : "Sign in"}</button>
     {mode !== "reset" && <button type="button" className="secondary" disabled={busy} onClick={() => {
       setMode(mode === "request" ? "sign-in" : "request"); setError(""); setMessage("");
