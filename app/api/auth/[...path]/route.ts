@@ -15,7 +15,7 @@ export async function POST(request: NextRequest, context: Context) {
     if(raw.length>16000)return new Response("Request too large.",{status:413});
     let body;try{body=JSON.parse(raw);}catch{return new Response("Invalid request.",{status:400});}
     const allowed=path.join("/") === "sign-up/email" && typeof body?.email === "string" && await validInvitation(request.headers.get("X-Invitation-Token")??"",body.email);
-    if(!allowed)return new Response("Access is by invitation only.",{status:403});
+    if(!allowed)return Response.json({code:"INVITATION_INVALID",message:"This invitation is invalid, expired, revoked, or belongs to another email address."},{status:403});
   }
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return new Response("Invalid origin.", {status: 403});
