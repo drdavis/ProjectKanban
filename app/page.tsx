@@ -9,7 +9,7 @@ function Welcome({children}: {children: React.ReactNode}) {
   return <AuthShell>{children}<a className="auth-preview" href="/preview">Explore the sample workspace →</a></AuthShell>;
 }
 
-export default async function Page({searchParams}: {searchParams: Promise<{token?:string;error?:string}>}) {
+export default async function Page({searchParams}: {searchParams: Promise<{token?:string;error?:string;signedOut?:string}>}) {
   await connection();
   if (!neonAuth()) {
     return <Welcome><p>Configure Neon Auth to sign in to ProjectKanban.</p></Welcome>;
@@ -25,5 +25,5 @@ export default async function Page({searchParams}: {searchParams: Promise<{token
   }
   return userId
     ? <Workspace userId={userId} account={<NeonSignOut/>}/>
-    : <Welcome><h1>Welcome back</h1><p>Sign in to your boards. New here? Open your invitation email to create an account.</p><NeonSignIn/></Welcome>;
+    : <Welcome><h1>Welcome back</h1>{query.signedOut && <p role="status">Your session ended or you signed out in another tab. Sign in to continue.</p>}<p>Sign in to your boards. New here? Open your invitation email to create an account.</p><NeonSignIn/></Welcome>;
 }

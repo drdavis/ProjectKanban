@@ -59,6 +59,7 @@ async function request<T>(productId?: string, command?: z.input<typeof mutation>
   const response = await fetch(url, command ? {
     method: "POST", headers: {"Content-Type": "application/json", ...(providerSelection ? {"X-ProjectKanban-AI-Connection": providerSelection} : {})}, body: JSON.stringify(command),
   } : {cache: "no-store"});
+  if (response.status === 401) { window.location.assign("/?signedOut=1"); throw new Error("Your session ended. Sign in to continue."); }
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error ?? "The request failed.");
   return payload;

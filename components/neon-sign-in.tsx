@@ -50,8 +50,18 @@ export function NeonSignIn({initialEmail = ""}: {initialEmail?: string}) {
 }
 
 export function NeonSignOut() {
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "projectkanban:sign-out") window.location.assign("/?signedOut=1");
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
   return <button className="secondary" onClick={async () => {
     const result = await client.signOut();
-    if (!result.error) window.location.assign("/");
+    if (!result.error) {
+      try { localStorage.setItem("projectkanban:sign-out", String(Date.now())); } catch {}
+      window.location.assign("/");
+    }
   }}>Sign out</button>;
 }
