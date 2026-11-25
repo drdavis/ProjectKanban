@@ -74,3 +74,9 @@ Email is selected by default when configured, with explicit Send invitation emai
 Verification: 65 tests passed, including mocked provider acceptance/rejection/connection failure, persistent receipt reads, owner-only history, and preserving concurrent invitation acceptance. Production build passed. No real invitation was sent during these tests.
 
 Invitation submission correction: the shared Button defaults to type=button, so the invitation form action was inert. Explicit type=submit now invokes the send handler. A rendered-form regression check covers this behavior; 66 tests and the production build passed. Provider delivery still requires a real send.
+
+### Sign-in error feedback (2026-11-24)
+- Fixed handling of thrown Neon Auth errors: rejected credentials, unverified email, throttling, and service failures now have distinct feedback; raw provider details are not displayed.
+- Reproduced the misleading unavailable message using the installed Neon client and a mocked 401 response. All 68 tests and the production build pass.
+- Production session endpoint responded 200 and a synthetic invalid-account login returned the expected 401. This confirms endpoint reachability, not successful account login.
+- Chrome workflow acceptance remains blocked: managed browser bootstrap reports `Managed execution requires a usable CODEX_CLI_PATH`. Valid-account sign-in, invitation delivery, and Kris's board-only access still need interactive verification.
