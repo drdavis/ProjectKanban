@@ -14,6 +14,7 @@ const {defaultTaskBoard}=await import('../lib/task-board.ts');
 after(()=>rm(temp,{recursive:true,force:true}));
 test('human view renders client context and excludes software board names',()=>{
  const markup=renderToStaticMarkup(React.createElement(TaskWorkspace,{cards:[{id:'task',title:'Send client report',kind:'development',status:'Backlog',responsible:'Kris',execution:{work:{client:'Acme',agency:'D3'}}}],config:defaultTaskBoard,productId:'board',userId:'member',canEdit:true,busy:false,preview:true,open:()=>{},move:async()=>{},assign:async()=>{},quickAdd:async()=>{},bulk:async()=>{},classify:async()=>{}}));
+ assert.match(markup, /<button[^>]*type="submit"[^>]*>Quick add<\/button>/);
  assert.ok(markup.includes('Acme'));assert.ok(markup.includes('D3'));assert.ok(markup.includes('Send client report'));assert.ok(markup.includes('Awaiting approval'));
  assert.equal(markup.includes('Bug Fixes'),false);assert.equal(markup.includes('Development'),false);assert.equal(markup.includes('Verification evidence'),false);
 });
