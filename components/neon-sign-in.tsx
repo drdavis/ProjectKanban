@@ -5,13 +5,13 @@ import { authErrorMessage } from "../lib/auth-error";
 
 const client = createAuthClient();
 
-export function NeonSignIn() {
+export function NeonSignIn({initialEmail = ""}: {initialEmail?: string}) {
   const [mode, setMode] = useState<"sign-in" | "request" | "reset">("sign-in");
   useEffect(() => { if (new URLSearchParams(window.location.search).has("token")) setMode("reset"); }, []);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  return <form onSubmit={async (event) => {
+  return <form className="auth-form" onSubmit={async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     setBusy(true);
@@ -29,7 +29,7 @@ export function NeonSignIn() {
         if (!token) {setError("Request a new password setup link."); return;}
         const result = await client.resetPassword({token, newPassword: String(data.get("password"))});
         if (result.error) setError(authErrorMessage(result.error, mode));
-        else window.location.replace("/");
+        else {setMode("sign-in");window.history.replaceState(null,"","/");setMessage("Password saved. Sign in below to continue.");}
         return;
       }
       const result = await client.signIn.email({email: String(data.get("email")), password: String(data.get("password"))});
@@ -38,7 +38,7 @@ export function NeonSignIn() {
     } catch (error) {setError(authErrorMessage(error, mode));}
     finally {setBusy(false);}
   }}>
-    {mode !== "reset" && <label>Email<input name="email" type="email" autoComplete="username" required/></label>}
+    {mode !== "reset" && <label>Email<input name="email" defaultValue={initialEmail} type="email" autoComplete="username" required/></label>}
     {mode !== "request" && <label>Password<input name="password" type="password" autoComplete={mode === "reset" ? "new-password" : "current-password"} minLength={mode === "reset" ? 8 : undefined} required/></label>}
     <button className="primary" disabled={busy}>{mode === "reset" ? "Set password" : mode === "request" ? "Send setup link" : "Sign in"}</button>
     {mode !== "reset" && <button type="button" className="secondary" disabled={busy} onClick={() => {

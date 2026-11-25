@@ -1,11 +1,12 @@
 import { auth, neonAuth } from "../lib/auth";
 import { NeonSignIn, NeonSignOut } from "../components/neon-sign-in";
 import { connection } from "next/server";
-import { Layers3 } from "lucide-react";
+import { AuthShell } from "../components/auth-shell";
+import { VerifyEmail } from "../components/verify-email";
 import Workspace from "../components/workspace";
 
 function Welcome({children}: {children: React.ReactNode}) {
-  return <main className="welcome"><Layers3 size={34}/><h1>ProjectKanban</h1>{children}<a href="/preview">Explore the sample workspace →</a></main>;
+  return <AuthShell>{children}<a className="auth-preview" href="/preview">Explore the sample workspace →</a></AuthShell>;
 }
 
 export default async function Page() {
@@ -14,7 +15,12 @@ export default async function Page() {
     return <Welcome><p>Configure Neon Auth to sign in to ProjectKanban.</p></Welcome>;
   }
   const {userId} = await auth();
+  const session = !userId ? await neonAuth()!.getSession() : null;
+  if (!userId && session?.data?.user) {
+    const user = session.data.user;
+    return <Welcome>{!user.emailVerified ? <VerifyEmail email={user.email}/> : <><h1>Your account is ready</h1><p>No boards are assigned to this email yet. Ask the board owner to invite {user.email}.</p></>}<NeonSignOut/></Welcome>;
+  }
   return userId
     ? <Workspace userId={userId} account={<NeonSignOut/>}/>
-    : <Welcome><p>Private workspace. Sign in with an authorized account to access your products. Public registration is disabled.</p><NeonSignIn/></Welcome>;
+    : <Welcome><h1>Welcome back</h1><p>Sign in to your boards. New here? Open your invitation email to create an account.</p><NeonSignIn/></Welcome>;
 }
