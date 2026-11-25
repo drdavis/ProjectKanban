@@ -245,3 +245,7 @@ input,select,textarea {background:var(--surface);}
 .invitation-result.success { border-color:#178057; background:#edf9f2; color:#174f35; }
 .invitation-result > strong { font-size:1.1rem; }
 .invitation-history { padding:16px 0; border-bottom:1px solid #d9dee6; }
+
+.task-card { background:var(--card, #fff); border:1px solid #e2e5eb; border-radius:12px; padding:14px; margin:10px 0; box-shadow:0 2px 6px rgb(0 0 0 / 4%); }
+.task-card .task-row-title { min-width:0; flex-basis:calc(100% - 30px); }
+.task-card > select { max-width:100%; }

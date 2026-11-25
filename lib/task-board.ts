@@ -2,9 +2,10 @@ import {z} from 'zod';
 const label=z.string().trim().min(1).max(40);
 export const taskBoardFields=z.object({
  title:label.default('Tasks'),clientLabel:label.default('Client'),agencyLabel:label.default('Agency'),showAgency:z.boolean().default(true),
- defaultView:z.enum(['clients','agency','list','status']).default('clients'),
+ defaultView:z.enum(['clients','agency','list','status']).default('status'),
+ layoutVersion:z.literal(2).optional(),
  statusLabels:z.object({Backlog:label.default('To do'),Ready:label.default('Scheduled'),'In Progress':label.default('In progress'),Review:label.default('Awaiting approval'),Done:label.default('Done')}).default(()=>({Backlog:'To do',Ready:'Scheduled','In Progress':'In progress',Review:'Awaiting approval',Done:'Done'})),
-}).refine(v=>new Set(Object.values(v.statusLabels).map(x=>x.toLowerCase())).size===5,'Use a different label for each task status');
+}).transform(v=>({...v,defaultView:!v.layoutVersion&&v.defaultView==='clients'?'status' as const:v.defaultView,layoutVersion:2 as const})).refine(v=>new Set(Object.values(v.statusLabels).map(x=>x.toLowerCase())).size===5,'Use a different label for each task status');
 export type TaskBoard=z.output<typeof taskBoardFields>;
 export const defaultTaskBoard=taskBoardFields.parse({});
 export function taskStatusLabel(status:string,config:TaskBoard=defaultTaskBoard){return config.statusLabels[status as keyof TaskBoard['statusLabels']]??status;}
