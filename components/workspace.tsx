@@ -99,7 +99,7 @@ function Column({status, cards, open, add, disabled, taskMode}: {taskMode?: bool
   </section>;
 }
 
-export default function Workspace({account, preview, userId}: {account: ReactNode; preview?: Snapshot; userId?: string}) {
+export default function Workspace({account, preview, userId, accountEmail}: {account: ReactNode; preview?: Snapshot; userId?: string; accountEmail?: string}) {
   const [catalog, setCatalog] = useState<Product[]>(preview ? [preview.product] : []);
   const [selected, setSelected] = useState(preview?.product.id ?? "");
   const [snapshot, setSnapshot] = useState<Snapshot | undefined>(preview);
@@ -123,6 +123,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   useEffect(()=>{setBulkIds([]);setBulkStatus(workflows[board][0]);},[selected,board,filter,phase,tag,responsible]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
+  const [saveNotice,setSaveNotice]=useState("");
   const [prompt, setPrompt] = useState("");
   const [plannerConnection, setPlannerConnection] = useState<PublicProviderConnection | null>();
   const [includeRoadmap, setIncludeRoadmap] = useState(false);
@@ -135,6 +136,8 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   const taskMode = snapshot?.policy?.workType === "tasks";
   useEffect(() => { if (taskMode) { setBoard("development"); setPhase(""); } }, [taskMode]);
   const isOwner = snapshot?.role === "owner";
+  const ownsBoards = catalog.some(item=>item.owner===userId);
+  const collaboratorView = taskMode && !isOwner && !preview;
   const canEdit = isOwner || snapshot?.role === "editor";
   const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}));
 
@@ -162,6 +165,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
     locked.current = true;
     setBusy(true);
     setError("");
+    setSaveNotice("");
     try { await work(); }
     catch (error) { setError(error instanceof Error ? error.message : "The request failed."); }
     finally { locked.current = false; setBusy(false); }
@@ -184,6 +188,7 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
       }
       if (input.action === "product.create" && !Array.isArray(result)) setSelected(result.id);
       else if (selected) setSnapshot(await request<Snapshot>(selected));
+      setSaveNotice("Changes saved.");
       if (close) setPanel(undefined);
     });
   }
@@ -218,17 +223,19 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
   return <div className="workspace">
     <aside className="sidebar">
       <div className="brand"><span className="brand-mark" aria-hidden="true"><i/><i/><i/></span><strong className="brand-wordmark"><span className="wordmark-project">Project</span><span className="wordmark-kanban">Kanban</span></strong></div>
-      <div className="catalog-label">Boards <button disabled={busy || !!preview} aria-label="Add product" onClick={() => setPanel("product")}><Plus size={17}/></button></div>
+      <div className="catalog-label">Boards {(ownsBoards || (!loading && catalog.length===0)) && <button disabled={busy || !!preview} aria-label="Add product" onClick={() => setPanel("product")}><Plus size={17}/></button>}</div>
       <input className="search" aria-label="Find a board" placeholder="Find a board…" value={search} onChange={(event) => setSearch(event.target.value)}/>
       <label className="checkbox"><input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)}/>Show archived</label>
       <nav aria-label="Products">{catalog.filter(item=>showArchived||!item.archived).filter((item) => item.name.toLowerCase().includes(search.toLowerCase())).map((item) =>
         <button key={item.id} disabled={busy} aria-current={item.id === selected ? "page" : undefined} onClick={() => {
-          setSelected(item.id); setFilter(""); setPhase(""); setTag(""); setResponsible(""); setError("");
+          setSelected(item.id); setFilter(""); setPhase(""); setTag(""); setResponsible(""); setError(""); setSaveNotice("");
         }}><span className="product-icon">{item.name.slice(0, 2).toUpperCase()}</span>{item.name}</button>)}</nav>
-      <div className="sidebar-bottom">{!preview && <p className="muted">Signed in · Private workspace</p>}<Button variant="ghost" disabled={busy || !!preview} onClick={() => setPanel("import")}><GitBranch size={16}/> Add sample products</Button>{!preview && <Button variant="ghost" onClick={() => setPanel("provider")}>AI Provider</Button>}{account}</div>
+      <div className="sidebar-bottom">{!preview && <div className="account-summary"><span>Signed in as</span><strong>{accountEmail || 'Account connected'}</strong>{product&&<span>{snapshot?.role === 'owner' ? 'Board owner' : snapshot?.role === 'editor' ? 'Can edit this board' : 'View only'} · Private board</span>}</div>}{ownsBoards&&<Button variant="ghost" disabled={busy || !!preview} onClick={() => setPanel("import")}><GitBranch size={16}/> Add sample products</Button>}{!preview && !collaboratorView && <Button variant="ghost" onClick={() => setPanel("provider")}>AI Provider</Button>}{account}</div>
     </aside>
     <main className="main">
       {preview && <div className="preview-note">Read-only preview · Fictional product <a href="/">Back to sign-in</a></div>}
+      {saveNotice && !busy && <p className="save-notice" role="status">{saveNotice}</p>}
+      {busy && <p className="save-notice" role="status">Working…</p>}
       {error && !panel && <p className="error" role="alert">{error}</p>}
       {product ? <>
         <header className="workspace-header">
@@ -237,9 +244,9 @@ export default function Workspace({account, preview, userId}: {account: ReactNod
         </header>
         <div className="workspace-commands" aria-label="Product actions">
             <Button variant="ghost" disabled={busy || !!preview} aria-label="Refresh board" onClick={() => void run(async () => setSnapshot(await request<Snapshot>(selected)))}><RefreshCw size={16}/></Button>
-            <Button variant="outline" onClick={() => setPanel("settings")}>Configure</Button>
+            {!collaboratorView && <Button variant="outline" onClick={() => setPanel("settings")}>Configure</Button>}
             {!preview && <Button variant="outline" onClick={()=>setPanel("work")}>My Work</Button>}
-            {!preview && <Button variant="outline" onClick={() => setPanel("portfolio")}>Portfolio</Button>}
+            {!preview && !collaboratorView && <Button variant="outline" onClick={() => setPanel("portfolio")}>Portfolio</Button>}
             <Button variant="outline" onClick={() => setPanel("history")}>Activity</Button>
             {canEdit && !taskMode && <Button variant="outline" onClick={() => setPanel("planning")}>Plan product</Button>}
             {isOwner && <Button variant="outline" onClick={() => setPanel("mcp")}>MCP access</Button>}

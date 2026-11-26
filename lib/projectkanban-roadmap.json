@@ -4,7 +4,7 @@
     "development",
     "Review",
     "Move and edit cards in the local preview",
-    "Local card editing and drag are implemented. Browser drag and reload verification remain."
+    "Card editing and human-task drag are implemented; human drag and reload persistence passed live demo testing. Full software drag acceptance remains open."
   ],
   [
     "PK-02",
@@ -67,14 +67,14 @@
     "development",
     "Review",
     "Add saved views and portfolio overview",
-    "Browser-local saved views and portfolio filters implemented. Verify cross-product access and restoration."
+    "Account-backed saved views and portfolio filters implemented with version conflicts. Human client grouping and saving a named view passed live demo testing; multi-device restoration remains open."
   ],
   [
     "PK-11",
     "development",
     "Review",
     "Verify test deployment and prepare public release",
-    "Source has MIT license, developer test commands and an MCP acceptance script. Public visibility, clean-install and authenticated browser verification remain release gates."
+    "Public MIT-licensed repository includes deployment and MCP documentation and automated tests. Clean-install and remaining authenticated acceptance are release gates."
   ],
   [
     "PK-12",
@@ -95,7 +95,7 @@
     "development",
     "Review",
     "Enforce invitation-only application access",
-    "Block public signup/social login routes and require existing product access or an explicitly allowed verified email. Automated policy tests pass; production verification pending."
+    "Public signup/social routes are blocked. Production unauthenticated HTTP checks and demo invited-editor board isolation passed. Owner recovery and Kris personal onboarding remain unconfirmed."
   ],
   [
     "PK-15",

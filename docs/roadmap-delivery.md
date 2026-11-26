@@ -1,4 +1,6 @@
-# Roadmap implementation — November 24, 2026
+# Roadmap implementation
+
+Current closeout: November 25, 2026. See [live acceptance evidence](testing/2026-11-25-acceptance.md) for the latest results; dated entries below are historical. The five core releases are implemented. Remaining work is production acceptance and external integration activation, not a claim of fully verified operation.
 
 This records implemented behavior and activation requirements. It does not claim that production acceptance testing or external integration setup has been completed.
 
@@ -18,7 +20,7 @@ This records implemented behavior and activation requirements. It does not claim
 
 ## Intentional behavior and limits
 
-- Invitation links can be shared directly. Optional invitation email delivery uses Resend when RESEND_API_KEY and INVITATION_FROM_EMAIL are configured; sending is explicitly selected by the owner. Neon handles account verification/password flows; new-user email delivery still needs a live acceptance check. Existing authenticated users with the invited verified email receive membership on their next request.
+- Invitation links can be shared directly. Optional invitation email delivery uses Resend when RESEND_API_KEY and INVITATION_FROM_EMAIL are configured; sending is explicitly selected by the owner. Neon handles account verification/password flows; demo invitation, verification and reset delivery have passed live acceptance. Kris’s personal onboarding remains unconfirmed. Existing authenticated users with the invited verified email receive membership on their next request.
 - The existing `/api/mcp` endpoint retains single-product behavior. `/api/mcp/workspace` exposes `list_products` and requires a product ID for every scoped operation. Existing tokens remain valid for their original product; a new explicitly scoped connection is needed to authorize additional products.
 - Task recurrence creates one next task when a card first transitions into Done/Closed. It uses calendar dates, resets checklist and verification state, and does not generate a backlog of missed occurrences. A recorded successor prevents reopening and recompleting the same task from generating another occurrence.
 - Notifications are in-app for assignment, comments/mentions, and handoffs. No Slack posting or background coding agent was enabled. Invitation email requires separate configuration.
@@ -80,3 +82,9 @@ Invitation submission correction: the shared Button defaults to type=button, so 
 - Reproduced the misleading unavailable message using the installed Neon client and a mocked 401 response. All 68 tests and the production build pass.
 - Production session endpoint responded 200 and a synthetic invalid-account login returned the expected 401. This confirms endpoint reachability, not successful account login.
 - Chrome workflow acceptance remains blocked: managed browser bootstrap reports `Managed execution requires a usable CODEX_CLI_PATH`. Valid-account sign-in, invitation delivery, and Kris's board-only access still need interactive verification.
+
+## Development closeout — November 25
+
+Collaborator navigation, visible account identity and board role, save feedback, and simpler human-card details are implemented. Saved views retain entered names on failure. The regression suite now passes 72 tests. Recovery and human drag fixes have live demo evidence in the linked acceptance report. Earlier browser/CLI availability notes above describe their original sessions, not current capability.
+
+Do not close the remaining live gates based on these automated checks: owner recovery confirmation, Kris onboarding, two real coding clients, external GitHub/Vercel events, and broader mobile/attachment/import browser acceptance remain open. Optional background reminders are outside this release.

@@ -27,3 +27,15 @@ test('invitation action renders a submit button rather than an inert shared butt
  const form=markup.match(/<form[\s\S]*?<\/form>/)?.[0];assert.ok(form);
  assert.match(form,/<button[^>]*type="submit"[^>]*>Create link only<\/button>/);
 });
+
+// Human collaborators keep task coordination without software delivery controls.
+test('human card details keep discussion and hide software-only controls',async()=>{
+ const file=join(temp,'details.mjs');
+ await build({entryPoints:['components/work-details.tsx'],outfile:file,bundle:true,platform:'node',format:'esm',packages:'external',jsx:'automatic',logLevel:'silent'});
+ const {WorkDetails}=await import(pathToFileURL(file));
+ const props={productId:'board',card:{id:'task',execution:{}},refresh:async()=>{}};
+ const human=renderToStaticMarkup(React.createElement(WorkDetails,{...props,taskMode:true}));
+ const software=renderToStaticMarkup(React.createElement(WorkDetails,{...props,taskMode:false}));
+ for(const label of ['Discussion','Due date','Checklist'])assert.ok(human.includes(label),label);
+ for(const label of ['Agent delegation and handoff','Delivery evidence','Intake decision']){assert.ok(!human.includes(label),label);assert.ok(software.includes(label),label);}
+});
