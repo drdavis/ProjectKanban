@@ -42,3 +42,5 @@ Commits: 81a6f36 and 6b78243. Earlier verification-code and quick-add repairs: c
 - 72 automated tests passed, including human/software detail rendering. This pass does not establish browser acceptance for the new navigation changes.
 
 The five core roadmap releases are implemented. Production acceptance is a separate gate: owner recovery, Kris's personal onboarding, real multi-client MCP use and configured external webhook delivery remain unconfirmed.
+
+Release commit `6cda4e3` reached Ready in Vercel production. TypeScript checks and 72 tests passed; 32 public HTTP checks passed against the production domain. The deployment guide now explicitly distinguishes enabling provider signup for invitations from blocking public registration at the application.
